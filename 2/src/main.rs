@@ -1,4 +1,5 @@
 use std::fs;
+use std::collections::HashSet;
 
 fn main() {
     let res = fs::read_to_string("./input.txt");
@@ -37,35 +38,51 @@ fn get_invalid_ids_total(ranges: Vec<(u64, u64)>) -> u64 {
 }
 
 fn get_invalid_ids((start, end): (u64, u64)) -> Vec<u64> {
+    let start_len: u64 = start.to_string().len() as u64;
+    let end_len: u64 = end.to_string().len() as u64;
 
-    let start_len: u32 = start.to_string().len().try_into().unwrap();
-    let end_len: u32 = end.to_string().len().try_into().unwrap();
+    let mut invalids: Vec<u64> = (start_len..end_len + 1)
+        .flat_map(|length| {
+            let mut factors: Vec<u64> = (1..length.isqrt() + 1 as u64)
+                .flat_map(|n| {
+                    // The line below is the filter for part 1
+                    // if length % 2 == 0 { vec![length/2] } else { vec![] }
+                    if length % n == 0 { vec![n, length/n] } else { vec![] }
+                })
+                .filter(|x| x != &length)
+                .collect::<Vec<u64>>();
 
-    // Note that this works for the solution at hand but doesnt account fro | start_len - end_len | > 1
-    match (start_len % 2, end_len % 2) {
-        (0, 0) => return find_invalid_in_range(start, end),
-        (1, 0) => return find_invalid_in_range(10u64.pow(start_len), end),
-        (0, 1) => return find_invalid_in_range(start, 10u64.pow(end_len) - 1),
-        (_, _) => return vec![],
-    }
-    
+            factors.sort();
+            factors.dedup();
+
+            let length_start = if length == start_len { start } else { 10u64.pow((length - 1) as u32) };
+            let length_end = if length == end_len { end } else { 10u64.pow(length as u32) - 1 };
+
+            let invalid = factors
+                .iter()
+                .flat_map(|f| {
+                    find_invalid_in_range(length_start, length_end, *f)
+                })
+                .collect::<Vec<u64>>();
+            return invalid
+        })
+        .collect();
+
+    invalids.sort();
+    invalids.dedup();
+
+    invalids
 }
 
-fn find_invalid_in_range(start: u64, end: u64) -> Vec<u64> {
-    let repeat_length: u32 = (start.to_string().len() / 2).try_into().unwrap();
+fn find_invalid_in_range(start: u64, end: u64, repitition_length: u64) -> Vec<u64> {
+    let total_length: u64 = start.to_string().len() as u64;
+    let repititions = total_length / repitition_length;
 
-
-    (0..(10u64.pow(repeat_length)))
-        .map(|i| (i.to_string() + &i.to_string()).parse().unwrap())
+    (0..(10u64.pow(repitition_length as u32)))
+        .map(|i| (i.to_string().repeat(repititions as usize)).parse().unwrap())
         .filter(|&n| n >= start && n <= end)
         .collect()
 }
-
-// Part 2
-
-// find factors of length of start/end and all values in between
-// eg. length 8 1,2,4
-// check for repetitions of numbers of equal length to those factors
 
 #[cfg(test)]
 mod tests {
@@ -73,28 +90,34 @@ mod tests {
 
     #[test]
     fn find_invalid_in_range_2_digits() {
-        let res = find_invalid_in_range(10, 99);
+        let res = find_invalid_in_range(10, 99, 1);
         assert_eq!(res, vec![11, 22, 33, 44, 55, 66, 77, 88, 99]);
     }
 
     #[test]
     fn find_invalid_in_range_2_digits_start_end_respected() {
-        let res = find_invalid_in_range(20, 40);
+        let res = find_invalid_in_range(20, 40, 1);
         assert_eq!(res, vec![22, 33]);
     }
 
 
     #[test]
     fn find_invalid_in_range_2_digits_start_end_exact_inclusive() {
-        let res = find_invalid_in_range(44, 55);
+        let res = find_invalid_in_range(44, 55, 1);
         assert_eq!(res, vec![44, 55]);
     }
 
 
     #[test]
     fn find_invalid_in_range_6_digits() {
-        let res = find_invalid_in_range(10011000, 20000000);
-        assert_eq!(res, vec![44, 55]);
+        let res = find_invalid_in_range(10101111, 20000000, 2);
+        assert_eq!(res, vec![11111111, 12121212, 13131313, 14141414, 15151515, 16161616, 17171717, 18181818, 19191919]);
     }
 
+
+    #[test]
+    fn get_invalid_ids_4_digits() {
+        let res = get_invalid_ids((1, 100));
+        assert_eq!(res, vec![11, 22, 33, 44, 55, 66, 77, 88, 99]);
+    }
 }
