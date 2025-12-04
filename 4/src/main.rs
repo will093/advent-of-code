@@ -5,7 +5,7 @@ fn main() {
     let res = fs::read_to_string("./input.txt");
     match res {
         Ok(input) => {
-            let grid: Vec<Vec<char>> = input
+            let mut grid: Vec<Vec<char>> = input
                 .lines()
                 .into_iter()
                 .map(|line| line
@@ -15,12 +15,23 @@ fn main() {
                 .collect();
 
             let mut accessible_count = 0;
-            for i in (0..grid.len()) {
-                for j in (0..grid[0].len()) {
-                    if is_accessible(&grid, i as i32, j as i32) {
-                        accessible_count += 1;
-                    };
+
+            loop {
+                let mut iteration_accessible_count = 0;
+                for i in 0..grid.len() {
+                    for j in 0..grid[0].len() {
+                        if is_accessible(&grid, i as i32, j as i32) {
+                            iteration_accessible_count += 1;
+                            grid[i][j] = 'X';
+                        };
+                    }
                 }
+
+                if iteration_accessible_count == 0 {
+                    break;
+                }
+
+                accessible_count += iteration_accessible_count;
             }
 
             println!("Accessible: {}", accessible_count);
@@ -78,72 +89,72 @@ mod tests {
 
     #[test]
     fn is_paper_edge() {
-        let grid = vec![
+        let mut grid = vec![
             vec!['.', '@', '.'],
             vec!['.', '@', '.'],
             vec!['.', '@', '.'],
         ];
-        assert_eq!(is_paper(&grid, 0, 1), true);
-        assert_eq!(is_paper(&grid, 0, 0), false);
+        assert_eq!(is_paper(&mut grid, 0, 1), true);
+        assert_eq!(is_paper(&mut grid, 0, 0), false);
     }
 
     #[test]
     fn is_paper_inside() {
-        let grid = vec![
+        let mut grid = vec![
             vec!['.', '@', '.'],
             vec!['.', '@', '.'],
             vec!['.', '@', '.'],
         ];
-        assert_eq!(is_paper(&grid, 1, 1), true);
+        assert_eq!(is_paper(&mut grid, 1, 1), true);
     }
 
     #[test]
     fn is_paper_out_of_bounds() {
-        let grid = vec![
+        let mut grid = vec![
             vec!['.', '@'],
             vec!['.', '@'],
         ];
-        assert_eq!(is_paper(&grid, -1, -1), false);
-        assert_eq!(is_paper(&grid, 1, -1), false);
-        assert_eq!(is_paper(&grid, -1, 1), false);
+        assert_eq!(is_paper(&mut grid, -1, -1), false);
+        assert_eq!(is_paper(&mut grid, 1, -1), false);
+        assert_eq!(is_paper(&mut grid, -1, 1), false);
     }
 
 
     #[test]
     fn is_accessible_inside() {
-        let grid = vec![
+        let mut grid = vec![
             vec!['.', '@', '.', '@'],
             vec!['.', '@', '.', '@'],
             vec!['.', '@', '@', '.'],
             vec!['.', '@', '@', '@'],
         ];
-        assert_eq!(is_accessible(&grid, 1, 1), true);
-        assert_eq!(is_accessible(&grid, 2, 2), false);
+        assert_eq!(is_accessible(&mut grid, 1, 1), true);
+        assert_eq!(is_accessible(&mut grid, 2, 2), false);
     }
 
     #[test]
     fn is_accessible_outside() {
-        let grid = vec![
+        let mut grid = vec![
             vec!['.', '@', '.', '@'],
             vec!['.', '@', '.', '@'],
             vec!['.', '@', '@', '.'],
             vec!['.', '@', '@', '@'],
         ];
-        assert_eq!(is_accessible(&grid, 0, 1), true);
-        assert_eq!(is_accessible(&grid, 3, 3), true);
+        assert_eq!(is_accessible(&mut grid, 0, 1), true);
+        assert_eq!(is_accessible(&mut grid, 3, 3), true);
     }
 
 
     #[test]
     fn is_accessible_no_paper() {
-        let grid = vec![
+        let mut grid = vec![
             vec!['.', '@', '.', '@'],
             vec!['.', '.', '.', '@'],
             vec!['.', '.', '.', '.'],
             vec!['.', '@', '@', '@'],
         ];
-        assert_eq!(is_accessible(&grid, 0, 0), false);
-        assert_eq!(is_accessible(&grid, 1, 1), false);
+        assert_eq!(is_accessible(&mut grid, 0, 0), false);
+        assert_eq!(is_accessible(&mut grid, 1, 1), false);
     }
 
 }
