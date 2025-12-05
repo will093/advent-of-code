@@ -17,31 +17,13 @@ fn main() {
                 .lines()
                 .into_iter();
 
-            total_fresh_ingredients(lines);
-            // total_fresh_ids(lines);
+            total_fresh_ids(lines);
         },
         Err(e) => {
             panic!("{}", e)
         }
     }
 }
-
-fn total_fresh_ingredients(mut lines: Lines<'_>) {
-    let mut fresh_id_ranges: Vec<Range> = vec![];
-    while let Some(line) = lines.next() {
-        if line == "" {
-            break;
-        }
-        let mut split_line = line.split('-');
-        let start: u64 = split_line.next().unwrap().parse::<u64>().unwrap();
-        let end: u64 = split_line.next().unwrap().parse::<u64>().unwrap();
-        fresh_id_ranges.push(Range { start, end });
-    }
-    fresh_id_ranges.sort_by_key(|r| r.start);
-    println!("Fresh IDs: {:?}", fresh_id_ranges);
-
-}
-
 
 fn total_fresh_ids(mut lines: Lines<'_>) {
     let mut fresh_id_ranges: Vec<Range> = vec![];
