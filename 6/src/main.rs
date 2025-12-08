@@ -1,0 +1,92 @@
+use std::fs;
+
+fn main() -> Result<(), std::io::Error>{
+    let input = fs::read_to_string("./input.txt")?;
+
+    total_two(input);
+    Ok(())
+}
+
+fn total_two(input: String) {
+
+    let rows: Vec<Vec<&str>> = input
+        .lines()
+        .into_iter()
+        .map(|x| x.split("").filter(|&x| x != "").collect())
+        .collect();
+
+    let mut curr_operator = "";
+    let mut curr_value: u64 = 0;
+    let total = (0..rows[0].len()).fold(0, |sum, i| {
+        let col_operator = rows[rows.len() - 1][i];
+
+        let is_spacer_col = rows
+            .clone()
+            .into_iter()
+            .filter(|row| row[i] != " ")
+            .count() == 0;
+
+        if is_spacer_col {
+            return sum + curr_value;
+        }
+
+        match col_operator {
+            "*" => {
+                curr_operator = col_operator;
+                curr_value = 1;
+            },
+            "+" => {
+                curr_operator = col_operator;
+                curr_value = 0;
+            },
+            _ => {}
+        }
+
+        let column_num: u64 = rows[0..rows.len() - 1]
+            .into_iter()
+            .filter(|row| row[i].trim() != "")
+            .fold("".to_string(), |acc, row| format!("{}{}", acc, row[i]))
+            .parse::<u64>()
+            .unwrap();
+
+        match curr_operator {
+            "*" => {
+                curr_value = curr_value * column_num;
+            },
+            "+" => {
+                curr_value = curr_value + column_num;
+            },
+            op => panic!("Unknown operator {}", op)
+        }
+
+        sum
+    });
+
+    println!("Out: {}", total + curr_value);
+}
+
+
+fn total_one(input: String) {
+    let nums: Vec<Vec<&str>> = input
+        .lines()
+        .into_iter()
+        .map(|line| line.split(" ").filter(|x| x.trim() != "").collect())
+        .collect();
+
+    let out= (0..nums[0].len())
+        .map(|i| {
+            match nums[nums.len() - 1][i] {
+                "*" => {
+                    nums[0..nums.len() - 1].into_iter().fold(1, |acc, rows| acc * rows[i].parse::<u64>().unwrap())
+                },
+                "+" => {
+                    nums[0..nums.len() - 1].into_iter().fold(0, |acc, rows| acc + rows[i].parse::<u64>().unwrap())
+                },
+                op => panic!("Unknown operator {}", op)
+
+            }
+        })
+        .fold(0u64, |total, col_total| total + col_total);
+
+    println!("Out: {:?}", out);
+}
