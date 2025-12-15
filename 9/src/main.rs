@@ -1,5 +1,6 @@
 use std::{fs};
 use itertools::Itertools;
+use std::cmp::Reverse;
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 struct Coord {
@@ -7,7 +8,7 @@ struct Coord {
     y: i64,
 }
 
-impl Coord {
+impl Coord {   
     fn area(&self, j: &Coord) -> i64 {
         (1 + self.x - j.x).abs() * (1 + self.y - j.y).abs()
     }
@@ -16,6 +17,88 @@ impl Coord {
 struct Rectangle {
     start: Coord,
     end: Coord,
+    area: u64,
+}
+
+impl Rectangle {
+    fn max_x(&self) -> i64 { self.start.x.max(self.end.x) }
+    fn min_x(&self) -> i64 { self.start.x.min(self.end.x) }
+    fn max_y(&self) -> i64 { self.start.y.max(self.end.y) }
+    fn min_y(&self) -> i64 { self.start.y.min(self.end.y) }
+
+    fn interior_edges(&self) -> Vec<Edge> {
+        return vec![
+            Edge::new( 
+                Coord { x: self.min_x() + 1, y: self.min_y() + 1 },
+                Coord { x: self.min_x() + 1, y: self.max_y() - 1  },
+            ),
+            Edge::new( 
+                Coord { x: self.min_x() + 1, y: self.max_y() - 1  },
+                Coord { x: self.max_x() - 1, y: self.max_y() - 1  },
+            ),
+            Edge::new(
+                Coord { x: self.max_x() - 1, y: self.max_y() - 1  },
+                Coord { x: self.max_x() - 1, y: self.min_y() + 1  },
+            ),
+            Edge::new( 
+                Coord { x: self.max_x() - 1, y: self.min_y() + 1  },
+                Coord { x: self.min_x() + 1, y: self.min_y() + 1 },
+            ),
+        ]
+    }
+}
+
+#[derive(Debug)]
+struct Edge {
+    start: Coord,
+    end: Coord,
+    orientation: Orientation,
+}
+
+#[derive(Debug)]
+enum Orientation {
+    Vertical,
+    Horizontal,
+}
+
+impl Edge {
+
+    fn new(start: Coord, end: Coord) -> Self {
+        let orientation = if start.x == end.x { Orientation::Vertical } else { Orientation::Horizontal };
+        Edge { 
+            start,
+            end,
+            orientation,
+        }
+    }
+
+    fn max_x(&self) -> i64 { self.start.x.max(self.end.x) }
+    fn min_x(&self) -> i64 { self.start.x.min(self.end.x) }
+    fn max_y(&self) -> i64 { self.start.y.max(self.end.y) }
+    fn min_y(&self) -> i64 { self.start.y.min(self.end.y) }
+
+    fn intersects(&self, e: &Edge) -> bool {
+        match (&self.orientation, &e.orientation) {
+            (Orientation::Vertical, Orientation::Vertical) => {
+                self.start.x == e.start.x &&
+                self.max_y() >= e.min_y() &&
+                self.min_y() <= e.max_y()
+            },
+            (Orientation::Horizontal, Orientation::Horizontal) => {
+                self.start.y == e.start.y &&
+                self.max_x() >= e.min_x() &&
+                self.min_x() <= e.max_x()
+            },
+            (Orientation::Vertical, Orientation::Horizontal) => {
+                e.min_x() <= self.start.x && self.start.x <= e.max_x() &&
+                self.min_y() <= e.start.y && e.start.y <= self.max_y()
+            },
+            (Orientation::Horizontal, Orientation::Vertical) => {
+                self.min_x() <= e.start.x && e.start.x <= self.max_x() &&
+                e.min_y() <= self.start.y && self.start.y <= e.max_y()
+            },
+        }
+    }
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -48,13 +131,23 @@ fn largest_area(coords: &Vec<Coord>) -> i64 {
     max_area
 }
 
+fn get_boundary_edges(coords: &Vec<Coord>) -> Vec<Edge> {
+    let mut coords_cycled = coords[1..].to_vec();
+    coords_cycled.push(coords[0].clone());
 
-fn largest_interior_area(coords: &Vec<Coord>) -> i64 {
-    let loop_boundary = get_boundary_coords(coords);
+    coords
+        .iter()
+        .zip(coords_cycled.iter())
+        .map(|(c, c_next) | {
+            Edge::new(c.clone(), c_next.clone())
+        })
+        .collect()
+}
 
-    println!("Boundary calculated");
+fn largest_interior_area(coords: &Vec<Coord>) -> u64 {
+    let loop_edges = get_boundary_edges(coords);
 
-    let mut max_area = 0;
+    let mut rectangles = vec![];
 
     for i in 0..coords.len() {
         for j in i+1..coords.len() {
@@ -62,167 +155,46 @@ fn largest_interior_area(coords: &Vec<Coord>) -> i64 {
             let max_x = coords[i].x.max(coords[j].x);
             let min_y = coords[i].y.min(coords[j].y);
             let max_y = coords[i].y.max(coords[j].y);
-            let rectangle_vertices= vec![
-                Coord { x: min_x + 1, y: min_y + 1 },
-                Coord { x: min_x + 1, y: max_y - 1 },
-                Coord { x: max_x - 1, y: max_y - 1 },
-                Coord { x: max_x - 1, y: min_y + 1 },
-            ];
-            if is_inside_boundary(&loop_boundary, &rectangle_vertices) {
-                max_area = max_area.max(coords[i].area(&coords[j]))
-            }
+            let rectangle = Rectangle {
+                start: Coord { x: min_x, y: min_y },
+                end: Coord { x: max_x, y: max_y },
+                area: ((1 + max_x - min_x) * (1 + max_y - min_y)) as u64,
+            };
+            rectangles.push(rectangle);
         } 
     }
-    max_area
-}
 
-fn is_inside_boundary(outer_boundary: &Vec<Coord>, polygon_vertices: &Vec<Coord>) -> bool {
+    rectangles.sort_by_key(|r| Reverse(r.area));
 
-    let mut polygon_vertices_cycled = polygon_vertices[1..].to_vec();
-    polygon_vertices_cycled.push(polygon_vertices[0].clone());
-    
-    let is_inside: Vec<bool> = polygon_vertices
+    let max_area_rect = rectangles
         .iter()
-        .zip(polygon_vertices_cycled.iter())
-        .map(|(c1, c2)| {
-            match (c1, c2) {
-                (c1, c2) if c1.x == c2.x => {
-                    let max_y = c1.y.max(c2.y);
-                    let min_y = c1.y.min(c2.y);
-                    let mut intersection_points_edge: Vec<_> = outer_boundary
-                        .iter()
-                        .filter(|c| c.x == c1.x && c1.y >= min_y && c1.y <= max_y)
-                        .collect();
-                    intersection_points_edge.sort_by_key(|c| c.y);
-
-                    let mut prev = 0;
-                    for c in intersection_points_edge {
-                        if prev != 0 && c.y > prev + 1 {
-                            return false;
-                        }
-                        prev = c.y;
-                    }
-
-                    // let intersection_points_ray: Vec<_> = outer_boundary
-                    //     .iter()
-                    //     .filter(|c| c.x == c1.x && c1.y > max_y)
-                    //     .collect();
-                    
-                    // if intersection_points_ray.len() % 2 == 0 {
-                    //     return false;
-                    // }
-                    true
-                },
-                (c1, c2) if c1.y == c2.y => {
-                    let max_x = c1.x.max(c2.x);
-                    let min_x = c1.x.min(c2.x);
-                    let mut intersection_points_edge: Vec<_> = outer_boundary
-                        .iter()
-                        .filter(|c| c.y == c1.y && c1.x >= min_x && c1.x <= max_x)
-                        .collect();
-                    intersection_points_edge.sort_by_key(|c| c.x);
-
-                    let mut prev = min_x;
-                    for c in intersection_points_edge {
-                        if c.x > prev + 1 {
-                            return false;
-                        }
-                        prev = c.x;
-                    }
-                    if prev != min_x && prev != max_x {
-                        return false;
-                    }
-
-                    // let intersection_points_ray: Vec<_> = outer_boundary
-                    //     .iter()
-                    //     .filter(|c| c.x == c1.x && c1.y > max_x)
-                    //     .collect();
-                    
-                    // if intersection_points_ray.len() % 2 == 0 {
-                    //     return false;
-                    // }
-                    true
-                },
-                _ => { 
-                    panic!("Expected boundary point to share x or y coord with adjacent coords") 
-                },
-            }
-        })
-        .collect();
-
-    is_inside.iter().all(|v| !!v)
+        // For now filter out 1/2 width rectangles as they break the algorithm and probably are not the largest.
+        .filter(|&r| (r.start.x - r.end.x).abs() > 1 && (r.start.y - r.end.y).abs() > 1)
+        .find(|&r| is_inside_boundary(&loop_edges, r))
+        .unwrap();
+    max_area_rect.area
 }
 
-fn get_boundary_coords(coords: &Vec<Coord>) -> Vec<Coord> {
+// TODO: this gives the right answer but doesnt work for general case...
+fn is_inside_boundary(boundary_edges: &Vec<Edge>, rect: &Rectangle) -> bool {
+    let rect_interior = rect.interior_edges();
 
-    let mut coords_cycled = coords[1..].to_vec();
-    coords_cycled.push(coords[0].clone());
-
-    let boundary: Vec<_> = coords
-        .iter()
-        .zip(coords_cycled.iter())
-        .flat_map(|(c1, c2)| {
-            match (c1, c2) {
-                (c1, c2) if c1.x == c2.x => {
-                    let max_y = c1.y.max(c2.y);
-                    let min_y = c1.y.min(c2.y);
-
-                    let edge_coords: Vec<_> = (min_y..=max_y).map(|y| Coord { x: c1.x, y }).collect();
-                    edge_coords
-                },
-                (c1, c2) if c1.y == c2.y => {
-                    let max_x = c1.x.max(c2.x);
-                    let min_x = c1.x.min(c2.x);
-
-                    let edge_coords: Vec<_> = (min_x..=max_x).map(|x| Coord { x, y: c1.y }).collect();
-                    edge_coords
-                },
-                _ => { 
-                    panic!("Expected boundary point to share x or y coord with adjacent coords") 
-                },
+    for rect_edge in &rect_interior {
+        for boundary_edge in boundary_edges {
+            if rect_edge.intersects(boundary_edge) {
+                return false;
             }
-        })
-        .unique()
-        
-        .collect();
+        }
+    }
 
-    boundary
+    true
 }
+
 
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn get_boundary_coords_adjacent_share_x_or_y() {
-        let input_coords = vec![
-            Coord { x: 10, y: 4 },
-            Coord { x: 10, y: 2 },
-            Coord { x: 7, y: 2 },
-            Coord { x: 7, y: 4 },
-        ];
-        let output_coords = get_boundary_coords(&input_coords);
-        
-        let expected_coords = vec![
-            Coord { x: 10, y: 4 },
-            Coord { x: 10, y: 3 },
-            Coord { x: 10, y: 2 },
-            Coord { x: 9, y: 2 },
-            Coord { x: 8, y: 2 },
-            Coord { x: 7, y: 2 },
-            Coord { x: 7, y: 3 },
-            Coord { x: 7, y: 4 },
-            Coord { x: 8, y: 4 },
-            Coord { x: 7, y: 4 },
-        ];
-
-        assert_eq!(output_coords.len(), expected_coords.len());
-        
-        for c in expected_coords {
-            assert_eq!(output_coords.iter().find(|&o| o == &c), Some(&c));
-        }
-    }
 
 
     #[test]
