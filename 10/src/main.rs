@@ -1,14 +1,18 @@
 use regex::Regex;
 use std::fs;
 use rand::Rng;
+use good_lp::{variables, variable, ProblemVariables, SolverModel, Solution, constraint};
+use good_lp::solvers::coin_cbc;
+use std::time::Instant;
 
 #[derive(Debug)]
 struct Machine {
-    joltage_current: Vec<u32>,
-    joltage_configured: Vec<u32>,
+    joltage_current: Vec<i32>,
+    joltage_configured: Vec<i32>,
     indicators_current: Vec<bool>,
     indicators_configured: Vec<bool>,
     switches: Vec<Vec<usize>>,
+    switches_matrix: Vec<Vec<i32>>
 }
 
 impl Machine {
@@ -38,15 +42,30 @@ impl Machine {
         safe
     }
 
-    fn new(joltage_configured: Vec<u32>, indicators_configured: Vec<bool>, switches: Vec<Vec<usize>>) -> Machine {
+    fn new(joltage_configured: Vec<i32>, indicators_configured: Vec<bool>, switches: Vec<Vec<usize>>) -> Machine {
+
         let mut machine = Self {
             joltage_configured,
             indicators_configured,
             switches,
             joltage_current: vec![],
             indicators_current: vec![],
+            switches_matrix: vec![],
         };
+
         machine.reset();
+
+        machine.switches_matrix = transpose(machine.switches
+            .iter()
+            .map(|s| {
+                let mut row: Vec<_> = machine.joltage_current.iter().map(|_| 0).collect();
+                for n in s {
+                    row[*n] = 1;
+                }
+                row
+            })
+            .collect());
+
         machine
     }
 
@@ -55,9 +74,51 @@ impl Machine {
         self.joltage_current = self.joltage_configured.iter().map(|_| 0).collect();
     }
 
+    fn solve_with_good_lp(&self) -> i32 {
+        let mut vars = variables!();
+
+        let sw_vars: Vec<_> = self.switches
+            .iter()
+            .map(|_| vars.add(variable().min(0).integer()))
+            .collect();
+
+        let mut problem = vars
+            .minimise(sw_vars.iter().sum::<good_lp::Expression>())
+            .using(coin_cbc::coin_cbc);
+
+
+        let constraints: Vec<_> = self.switches_matrix
+            .iter()
+            .zip(&self.joltage_configured)
+            .map(|(sw_row, jolts)| { 
+                let expr = sw_row.iter().zip(&sw_vars).fold(0.into(), |acc, (c, x)| *c * *x + acc);
+                constraint!(expr == *jolts)
+            })
+            .collect();
+
+        for c in constraints {
+            problem = problem.with(c);
+        }
+
+        let solution = problem.solve().unwrap();
+
+        let min_pulls: i32 = sw_vars.iter().map(|v| solution.value(*v) as i32).sum();
+
+        min_pulls
+    }
+}
+
+fn transpose<T: Clone>(matrix: Vec<Vec<T>>) -> Vec<Vec<T>> {
+    if matrix.is_empty() { return vec![]; }
+    let row_len = matrix[0].len();
+    (0..row_len)
+        .map(|i| matrix.iter().map(|row| row[i].clone()).collect())
+        .collect()
 }
 
 fn main() -> Result<(), std::io::Error> {
+    let start = Instant::now();
+    
     let mut machines: Vec<Machine> = fs::read_to_string("./input.txt")?
         .lines()
         .map(|line| {
@@ -83,7 +144,7 @@ fn main() -> Result<(), std::io::Error> {
                 .collect();
 
             let joltage_re = Regex::new(r"\{(.*?)\}").unwrap();
-            let joltage_configured: Vec<u32> = joltage_re
+            let joltage_configured: Vec<i32> = joltage_re
                 .captures_iter(line)
                 .next()
                 .unwrap()
@@ -102,12 +163,19 @@ fn main() -> Result<(), std::io::Error> {
         })
         .collect();
 
+    println!("Machines {:?}", machines);
+
+    let min_pulls_total: i32 = machines.iter().map(|m| m.solve_with_good_lp()).sum();
+
+    println!("Min pulls {}", min_pulls_total);
     // let total = configure_machines(&mut machines);
     // println!("Total: {}", total);
 
-    let total_joltage_pulls = configure_joltage(&mut machines);
-    println!("Total joltage: {}", total_joltage_pulls);
+    // let total_joltage_pulls = configure_joltage(&mut machines);
+    // println!("Total joltage: {}", total_joltage_pulls);
 
+    let duration = start.elapsed();
+    println!("Total runtime: {:.2?}", duration);
     Ok(())
 }
 

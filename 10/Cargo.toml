@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 regex = "1.12.2"
 rand = "0.8"
+good_lp = { version = "1.14.2", default-features = false, features = ["coin_cbc"] }
