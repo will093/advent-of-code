@@ -171,9 +171,6 @@ fn main() -> Result<(), std::io::Error> {
     // let total = configure_machines(&mut machines);
     // println!("Total: {}", total);
 
-    // let total_joltage_pulls = configure_joltage(&mut machines);
-    // println!("Total joltage: {}", total_joltage_pulls);
-
     let duration = start.elapsed();
     println!("Total runtime: {:.2?}", duration);
     Ok(())
