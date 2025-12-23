@@ -1,10 +1,30 @@
+use crate::utils::solver::Solver;
 
-pub fn solve(input: &str) -> String {
-    let rotations = input.lines().collect();
-    // let zero_count = count_zero_clicks(rotations, 50);
-    let zero_count = count_zero_landings(rotations, 50);
+pub struct Day1Part1;
+pub struct Day1Part2;
 
-    zero_count.to_string()
+impl Solver for Day1Part1 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "01" }
+    fn label(&self) -> &str { "Day 1 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        let rotations = input.lines().collect();
+        let zero_count = count_zero_landings(rotations, 50);
+
+        zero_count.to_string()
+    }
+}
+
+impl Solver for Day1Part2 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "01" }
+    fn label(&self) -> &str { "Day 1 Part 2" }
+    fn solve(&self, input: &str) -> String {
+        let rotations = input.lines().collect();
+        let zero_count = count_zero_clicks(rotations, 50);
+
+        zero_count.to_string()
+    }
 }
 
 fn count_zero_landings(rotations: Vec<&str>, start: i32) -> i32 {

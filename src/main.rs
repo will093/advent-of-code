@@ -5,7 +5,9 @@ use std::time;
 mod year_2025;
 mod utils;
 
-macro_rules! print_run_time {
+use utils::inputs::ProblemInputs;
+
+macro_rules! time_execution {
     ($label: expr, $expression:expr) => {{
         let start = time::SystemTime::now().duration_since(time::UNIX_EPOCH).expect("System time before Unix epoch");
         let result = $expression;
@@ -16,27 +18,33 @@ macro_rules! print_run_time {
     }};
 }
 
-
 fn main() -> Result<(), Box<dyn Error>> {
     let mut args = env::args();
     let year = args.nth(1);
     let day = args.next();
 
-    let inputs = utils::inputs::load("./inputs")?;
+    let problem_inputs = ProblemInputs::load_from_path("./inputs")?;
+    let inputs = problem_inputs.get(year.as_deref(), day.as_deref());
 
-    // TODO: Run the solution for each input.
+    let solutions: Vec<Box<dyn utils::solver::Solver>> = vec![
+        Box::new(year_2025::day_01::Day1Part1),
+        Box::new(year_2025::day_01::Day1Part2),
+    ];
 
-    let input = &inputs
-        .iter()
-        .find(|&y| y.name == "2025")
-        .unwrap()
-        .days
-        .iter()
-        .find(|&d| d.name == "day1.txt")
-        .unwrap()
-        .text;
+    for input in inputs {
+        let input_text = input.get_text()?;
 
-    let result = print_run_time!("2025 Day 1", year_2025::day1::solve(input));
+        solutions
+            .iter()
+            .filter(|&solver| {
+                let solver = solver.as_ref();
+                solver.year() == input.year && solver.day() == input.day
+            })
+            .for_each(|solver| {
+                let solver = solver.as_ref();
+                time_execution!(solver.label(), solver.solve(&input_text));
+            });
+    }
 
     Ok(())
 }
