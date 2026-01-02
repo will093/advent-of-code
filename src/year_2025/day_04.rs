@@ -1,45 +1,60 @@
-use std::fs;
+use crate::utils::solver::Solver;
+use std::u32;
 
+pub struct Day4Part1;
+pub struct Day4Part2;
 
-fn main() {
-    let res = fs::read_to_string("./input.txt");
-    match res {
-        Ok(input) => {
-            let mut grid: Vec<Vec<char>> = input
-                .lines()
-                .into_iter()
-                .map(|line| line
-                    .chars()
-                    .collect()
-                )
-                .collect();
-
-            let mut accessible_count = 0;
-
-            loop {
-                let mut iteration_accessible_count = 0;
-                for i in 0..grid.len() {
-                    for j in 0..grid[0].len() {
-                        if is_accessible(&grid, i as i32, j as i32) {
-                            iteration_accessible_count += 1;
-                            grid[i][j] = 'X';
-                        };
-                    }
-                }
-
-                if iteration_accessible_count == 0 {
-                    break;
-                }
-
-                accessible_count += iteration_accessible_count;
-            }
-
-            println!("Accessible: {}", accessible_count);
-        },
-        Err(e) => {
-            panic!("{}", e)
-        }
+impl Solver for Day4Part1 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "04" }
+    fn label(&self) -> &str { "Day 4 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        solve(input, false)
     }
+}
+
+impl Solver for Day4Part2 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "04" }
+    fn label(&self) -> &str { "Day 4 Part 2" }
+    fn solve(&self, input: &str) -> String {
+        solve(input, true)
+    }
+}
+
+fn solve(input: &str, multi_iter: bool) -> String {
+    let mut grid: Vec<Vec<char>> = input
+        .lines()
+        .into_iter()
+        .map(|line| line
+            .chars()
+            .collect()
+        )
+        .collect();
+
+    let mut accessible_count = 0;
+
+    let iter_count = if multi_iter { u32::MAX } else { 1 };
+    for _ in 0..iter_count {
+        let mut iteration_accessible_count = 0;
+        for i in 0..grid.len() {
+            for j in 0..grid[0].len() {
+                if is_accessible(&grid, i as i32, j as i32) {
+                    iteration_accessible_count += 1;
+                    if multi_iter {
+                        grid[i][j] = 'X';
+                    }
+                };
+            }
+        }
+
+        if iteration_accessible_count == 0 {
+            break;
+        }
+
+        accessible_count += iteration_accessible_count;
+    }
+    accessible_count.to_string()
 }
 
 

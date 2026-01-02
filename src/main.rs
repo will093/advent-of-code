@@ -29,6 +29,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     let solutions: Vec<Box<dyn utils::solver::Solver>> = vec![
         Box::new(year_2025::day_01::Day1Part1),
         Box::new(year_2025::day_01::Day1Part2),
+        Box::new(year_2025::day_02::Day2Part1),
+        Box::new(year_2025::day_02::Day2Part2),
+        Box::new(year_2025::day_03::Day3Part1),
+        Box::new(year_2025::day_03::Day3Part2),
+        Box::new(year_2025::day_04::Day4Part1),
+        Box::new(year_2025::day_04::Day4Part2),
+        Box::new(year_2025::day_05::Day5Part1),
+        Box::new(year_2025::day_05::Day5Part2),
+        Box::new(year_2025::day_06::Day6Part1),
+        Box::new(year_2025::day_06::Day6Part2),
+        Box::new(year_2025::day_07::Day7Part1),
+        Box::new(year_2025::day_07::Day7Part2),
+        Box::new(year_2025::day_08::Day8Part1),
+        Box::new(year_2025::day_08::Day8Part2),
+        Box::new(year_2025::day_09::Day9Part1),
+        Box::new(year_2025::day_09::Day9Part2),
+        Box::new(year_2025::day_10::Day10Part1),
+        Box::new(year_2025::day_10::Day10Part2),
+        Box::new(year_2025::day_11::Day11Part1),
+        Box::new(year_2025::day_11::Day11Part2), 
+        Box::new(year_2025::day_12::Day12), 
     ];
 
     for input in inputs {
@@ -42,7 +63,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             })
             .for_each(|solver| {
                 let solver = solver.as_ref();
-                time_execution!(solver.label(), solver.solve(&input_text));
+                let result = time_execution!(solver.label(), solver.solve(&input_text));
+                println!("Result: {}", result);
+                println!("- - - - - - - - - - - - - - - -");
             });
     }
 

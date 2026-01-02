@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::error::Error;
-// TODO: Refactor into list of items with year and day (and part) 
 
 #[derive(Debug, Clone)]
 pub struct ProblemInput {
@@ -12,8 +11,6 @@ pub struct ProblemInput {
 
 impl ProblemInput {
     pub fn get_text(&self) -> Result<String, Box<dyn Error>> {
-        let f = format!("{}/{}/{}.txt", self.base_path, self.year, self.day);
-        dbg!(f);
         let text = fs::read_to_string(format!("{}/{}/{}.txt", self.base_path, self.year, self.day))?;
         Ok(text)
     }

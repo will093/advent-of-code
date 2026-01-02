@@ -1,5 +1,26 @@
-use std::fs;
-use std::collections::HashSet;
+use crate::utils::solver::Solver;
+use std::collections::{HashSet};
+pub struct Day8Part1;
+pub struct Day8Part2;
+
+
+impl Solver for Day8Part1 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "08" }
+    fn label(&self) -> &str { "Day 8 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        solve(input).0
+    }
+}
+
+impl Solver for Day8Part2 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "08" }
+    fn label(&self) -> &str { "Day 8 Part 2" }
+    fn solve(&self, input: &str) -> String {
+        solve(input).1
+    }
+}
 
 #[derive(Clone)]
 struct Junction {
@@ -18,9 +39,8 @@ impl Junction {
     }
 }
 
-fn main() -> Result<(), std::io::Error> {
-   let junctions: Vec<Junction> = fs::read_to_string("./input.txt")?
-        .lines()
+fn solve(input: &str) -> (String, String) {
+   let junctions: Vec<Junction> = input.lines()
         .enumerate()
         .map(|(i, line)| {
             let parts: Vec<&str> = line.split(',').collect();
@@ -47,15 +67,24 @@ fn main() -> Result<(), std::io::Error> {
         s
     }).collect();
 
+    let mut count = 0;
+    let mut part1_result = 0;
+
+
     loop {
+        if count == 1000 {
+            circuit_sets.sort_by_key(|s| usize::MAX - s.len());
+            part1_result = circuit_sets[0].len() * circuit_sets[1].len() * circuit_sets[2].len();
+        }
+        count += 1;
         let dist = shortest_distances_iter.next().unwrap();
 
         let i1 = circuit_sets.iter().position(|set| set.contains(&(dist.0 as i64))).unwrap();
         let i2 = circuit_sets.iter().position(|set| set.contains(&(dist.1 as i64))).unwrap();
 
         if circuit_sets.len() == 2 && i1 != i2 {
-            println!("Final Junctions X multiplied: {}", junctions[dist.0].x * junctions[dist.1].x);
-            break;
+            let part2_result = junctions[dist.0].x * junctions[dist.1].x;
+            return (part1_result.to_string(), part2_result.to_string());
         }
 
         if i1 == i2 {
@@ -70,6 +99,4 @@ fn main() -> Result<(), std::io::Error> {
         circuit_sets.remove(i1.min(i2));
 
     }
-
-    Ok(())
 }

@@ -1,6 +1,28 @@
-use std::{fs};
-use itertools::Itertools;
-use std::cmp::Reverse;
+use crate::utils::solver::Solver;
+use std::{cmp::Reverse};
+
+pub struct Day9Part1;
+pub struct Day9Part2;
+
+
+impl Solver for Day9Part1 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "09" }
+    fn label(&self) -> &str { "Day 9 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        solve(input).0
+    }
+}
+
+impl Solver for Day9Part2 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "09" }
+    fn label(&self) -> &str { "Day 9 Part 2" }
+    fn solve(&self, input: &str) -> String {
+        solve(input).1
+    }
+}
+
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 struct Coord {
@@ -101,8 +123,8 @@ impl Edge {
     }
 }
 
-fn main() -> Result<(), std::io::Error> {
-    let coords: Vec<Coord> = fs::read_to_string("./input.txt")?
+fn solve(input: &str) -> (String, String) {
+    let coords: Vec<Coord> = input
         .lines()
         .map(|line| {
             let parts: Vec<&str> = line.split(',').collect();
@@ -113,12 +135,9 @@ fn main() -> Result<(), std::io::Error> {
         .collect();
 
     let area = largest_area(&coords);
-    println!("Largest area: {}", area);
-
     let interior_area = largest_interior_area(&coords);
-    println!("Largest  interior area: {}", interior_area);
 
-    Ok(())
+    (area.to_string(), interior_area.to_string())
 }
 
 fn largest_area(coords: &Vec<Coord>) -> i64 {

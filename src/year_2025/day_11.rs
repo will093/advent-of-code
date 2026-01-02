@@ -1,5 +1,26 @@
 use std::collections::HashMap;
-use std::fs;
+use crate::utils::solver::Solver;
+
+pub struct Day11Part1;
+pub struct Day11Part2;
+
+impl Solver for Day11Part1 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "11" }
+    fn label(&self) -> &str { "Day 11 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        solve(input).0
+    }
+}
+
+impl Solver for Day11Part2 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "11" }
+    fn label(&self) -> &str { "Day 11 Part 2" }
+    fn solve(&self, input: &str) -> String {
+        solve(input).1
+    }
+}
 
 struct Device {
     id: String,
@@ -23,10 +44,10 @@ impl Device {
     }
 }
 
-fn main() -> Result<(), std::io::Error>  {
+fn solve(input: &str) -> (String, String)  {
     let mut device_map: HashMap<String, Device> = HashMap::new();
 
-    let devices: Vec<Device> = fs::read_to_string("./input.txt")?
+    let devices: Vec<Device> = input
         .lines()
         .map(|line| {
             let parts: Vec<&str> = line.split(":").collect();
@@ -49,8 +70,7 @@ fn main() -> Result<(), std::io::Error>  {
     device_map.insert("out".to_string(), Device { id: "out".to_string(), outputs: vec![] });
 
     let total_paths = device_map.get("you").unwrap().path_count("out", &device_map, &mut HashMap::new());
-    
-    println!("Total paths from you to out: {}", total_paths);
+
 
     let paths_svr_fft = device_map.get("svr").unwrap().path_count("fft", &device_map, &mut HashMap::new());
     let paths_fft_dac = device_map.get("fft").unwrap().path_count("dac", &device_map, &mut HashMap::new());
@@ -65,6 +85,5 @@ fn main() -> Result<(), std::io::Error>  {
     let route_2_total = paths_svr_dac * paths_dac_fft * paths_fft_out;
 
     let grand_total = route_1_total + route_2_total;
-    println!("Total paths svr to out via dac and fft: {:?}", grand_total);
-    Ok(())
+    (total_paths.to_string(), grand_total.to_string())
 }

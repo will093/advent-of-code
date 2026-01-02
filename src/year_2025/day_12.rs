@@ -1,4 +1,15 @@
-use::std::fs;
+use crate::utils::solver::Solver;
+
+pub struct Day12;
+
+impl Solver for Day12 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "12" }
+    fn label(&self) -> &str { "Day 12 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        solve(input)
+    }
+}
 
 #[derive(Debug)]
 struct Region {
@@ -7,10 +18,9 @@ struct Region {
     shape_counts: Vec<u32>,
 }
 
-fn main()-> Result<(), std::io::Error> {
+fn solve(input: &str)-> String {
 
-    let file_content = fs::read_to_string("./input.txt")?;
-    let mut lines = file_content.lines();
+    let mut lines = input.lines();
 
     let mut block_counts = vec![];
     for _ in 0..6 {
@@ -38,8 +48,6 @@ fn main()-> Result<(), std::io::Error> {
         }
 
         block_counts.push(block_count);
-
-        println!("shape {:?}", shape);
     }
 
     let regions: Vec<_> = lines
@@ -71,11 +79,7 @@ fn main()-> Result<(), std::io::Error> {
         }
 
         fit_count += 1;
-
-        println!("{}: region area {} shape area {}", i, region_area, shape_area);
     }
 
-    println!("fit count {}", fit_count);
-
-    Ok(())
+    fit_count.to_string()
 }

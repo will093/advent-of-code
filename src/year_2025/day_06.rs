@@ -1,13 +1,27 @@
-use std::fs;
+use crate::utils::solver::Solver;
 
-fn main() -> Result<(), std::io::Error>{
-    let input = fs::read_to_string("./input.txt")?;
+pub struct Day6Part1;
+pub struct Day6Part2;
 
-    total_two(input);
-    Ok(())
+impl Solver for Day6Part1 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "06" }
+    fn label(&self) -> &str { "Day 6 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        solve_one(input)
+    }
 }
 
-fn total_two(input: String) {
+impl Solver for Day6Part2 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "06" }
+    fn label(&self) -> &str { "Day 6 Part 2" }
+    fn solve(&self, input: &str) -> String {
+        solve_two(input)
+    }
+}
+
+fn solve_two(input: &str) -> String {
 
     let rows: Vec<Vec<&str>> = input
         .lines()
@@ -62,11 +76,11 @@ fn total_two(input: String) {
         sum
     });
 
-    println!("Out: {}", total + curr_value);
+    (total + curr_value).to_string()
 }
 
 
-fn total_one(input: String) {
+fn solve_one(input: &str) -> String {
     let nums: Vec<Vec<&str>> = input
         .lines()
         .into_iter()
@@ -87,6 +101,5 @@ fn total_one(input: String) {
             }
         })
         .fold(0u64, |total, col_total| total + col_total);
-
-    println!("Out: {:?}", out);
+    out.to_string()
 }

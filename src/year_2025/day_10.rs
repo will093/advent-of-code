@@ -1,9 +1,30 @@
+use crate::utils::solver::Solver;
 use regex::Regex;
-use std::fs;
 use rand::Rng;
-use good_lp::{variables, variable, ProblemVariables, SolverModel, Solution, constraint};
+use good_lp::{variables, variable, SolverModel, Solution, constraint};
 use good_lp::solvers::coin_cbc;
 use std::time::Instant;
+
+pub struct Day10Part1;
+pub struct Day10Part2;
+
+impl Solver for Day10Part1 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "10" }
+    fn label(&self) -> &str { "Day 10 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        solve(input).0
+    }
+}
+
+impl Solver for Day10Part2 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "10" }
+    fn label(&self) -> &str { "Day 10 Part 2" }
+    fn solve(&self, input: &str) -> String {
+        solve(input).1
+    }
+}
 
 #[derive(Debug)]
 struct Machine {
@@ -116,10 +137,10 @@ fn transpose<T: Clone>(matrix: Vec<Vec<T>>) -> Vec<Vec<T>> {
         .collect()
 }
 
-fn main() -> Result<(), std::io::Error> {
+fn solve(input: &str) -> (String, String) {
     let start = Instant::now();
     
-    let mut machines: Vec<Machine> = fs::read_to_string("./input.txt")?
+    let machines: Vec<Machine> = input
         .lines()
         .map(|line| {
             let indicators_re = Regex::new(r"\[(.*?)\]").unwrap();
@@ -163,17 +184,9 @@ fn main() -> Result<(), std::io::Error> {
         })
         .collect();
 
-    println!("Machines {:?}", machines);
-
     let min_pulls_total: i32 = machines.iter().map(|m| m.solve_with_good_lp()).sum();
 
-    println!("Min pulls {}", min_pulls_total);
-    // let total = configure_machines(&mut machines);
-    // println!("Total: {}", total);
-
-    let duration = start.elapsed();
-    println!("Total runtime: {:.2?}", duration);
-    Ok(())
+    (0.to_string(), min_pulls_total.to_string())
 }
 
 
@@ -184,8 +197,6 @@ fn configure_joltage(machines: &mut Vec<Machine>) -> i32 {
         .iter_mut()
         .fold(0, |sum, machine| {
             let mut min_pull_count = 10000;
-
-            println!("Running {}", sum);
 
             let mut found_correct = false;
             for _ in 0..10000 {
@@ -205,7 +216,6 @@ fn configure_joltage(machines: &mut Vec<Machine>) -> i32 {
                         continue;
                     }
 
-                    // println!("joltage {:?} {:?}", machine.joltage_current, machine.joltage_configured);
                     pull_count += 1
                 }
 

@@ -1,9 +1,29 @@
-use std::fs;
+use crate::utils::solver::Solver;
 use std::collections::HashMap;
 
-fn main() -> Result<(), std::io::Error> {
-    let char_grid: Vec<Vec<char>> = fs::read_to_string("./input.txt")?
-        .lines()
+pub struct Day7Part1;
+pub struct Day7Part2;
+
+impl Solver for Day7Part1 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "07" }
+    fn label(&self) -> &str { "Day 7 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        solve_one(input)
+    }
+}
+
+impl Solver for Day7Part2 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "07" }
+    fn label(&self) -> &str { "Day 7 Part 2" }
+    fn solve(&self, input: &str) -> String {
+        solve_two(input)
+    }
+}
+
+fn solve_one(input: &str) -> String  {
+    let char_grid: Vec<Vec<_>> = input.lines()
         .map(|line| line.chars().collect())
         .collect();
 
@@ -16,7 +36,15 @@ fn main() -> Result<(), std::io::Error> {
         &mut HashMap::new()
     );
 
-    println!("Total splits: {}", total_splits);
+    total_splits.to_string()
+}
+
+fn solve_two(input: &str) -> String {
+    let char_grid: Vec<Vec<_>> = input.lines()
+        .map(|line| line.chars().collect())
+        .collect();
+
+    let start_pos = char_grid[0].iter().position(|&c| c == 'S').unwrap();
 
     let total_quantum_splits = beam_quantum(
         &char_grid, 
@@ -25,8 +53,7 @@ fn main() -> Result<(), std::io::Error> {
         &mut HashMap::new()
     );
 
-    println!("Total quantum splits: {}", total_quantum_splits);
-    Ok(())
+    total_quantum_splits.to_string()
 }
 
 fn beam(grid: &Vec<Vec<char>>, i: i32, j: i32, memo: &mut HashMap<String, bool>) -> u32 {
@@ -99,3 +126,4 @@ mod tests {
         assert_eq!(beam(&mut grid, 0, 6, &mut memo), 5);
     }
 }
+

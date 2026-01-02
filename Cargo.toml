@@ -2,3 +2,9 @@
 name = "advent_will_t"
 version = "0.1.0"
 edition = "2024"
+
+
+[dependencies]
+regex = "1.12.2"
+rand = "0.8"
+good_lp = { version = "1.14.2", default-features = false, features = ["coin_cbc"] }

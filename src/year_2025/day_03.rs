@@ -1,26 +1,38 @@
-use std::fs;
+use crate::utils::solver::Solver;
 
+pub struct Day3Part1;
+pub struct Day3Part2;
 
-fn main() {
-    let res = fs::read_to_string("./input.txt");
-    match res {
-        Ok(input) => {
-            let sum = input.lines()
-                .into_iter()
-                .map(|bank| { 
-                    bank.chars()
-                        .map(|x| x.to_digit(10).unwrap())
-                        .collect()
-                })
-                .fold(0, |sum, bank| 
-                    sum + find_max_digits(bank, 12)
-                );
-            println!("Totla joltage is: {}", sum)
-        },
-        Err(e) => {
-            panic!("{}", e)
-        }
+impl Solver for Day3Part1 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "03" }
+    fn label(&self) -> &str { "Day 3 Part 1" }
+    fn solve(&self, input: &str) -> String {
+        solve(input, 2)
     }
+}
+
+impl Solver for Day3Part2 {
+    fn year(&self) -> &str { "2025" }
+    fn day(&self) -> &str { "03" }
+    fn label(&self) -> &str { "Day 3 Part 2" }
+    fn solve(&self, input: &str) -> String {
+        solve(input, 12)
+    }
+}
+
+fn solve(input: &str, digit_count: usize) -> String {
+    input.lines()
+        .into_iter()
+        .map(|bank| { 
+            bank.chars()
+                .map(|x| x.to_digit(10).unwrap())
+                .collect()
+        })
+        .fold(0, |sum, bank| 
+            sum + find_max_digits(bank, digit_count)
+        )
+        .to_string()
 }
 
 fn find_max_digits(nums: Vec<u32>, digit_count: usize) -> u64 {
