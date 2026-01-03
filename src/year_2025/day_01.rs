@@ -9,9 +9,7 @@ impl Solver for Day1Part1 {
     fn label(&self) -> &str { "Day 1 Part 1" }
     fn solve(&self, input: &str) -> String {
         let rotations = input.lines().collect();
-        let zero_count = count_zero_landings(rotations, 50);
-
-        zero_count.to_string()
+        count_zero_landings(rotations, 50).to_string()
     }
 }
 
@@ -21,9 +19,7 @@ impl Solver for Day1Part2 {
     fn label(&self) -> &str { "Day 1 Part 2" }
     fn solve(&self, input: &str) -> String {
         let rotations = input.lines().collect();
-        let zero_count = count_zero_clicks(rotations, 50);
-
-        zero_count.to_string()
+        count_zero_clicks(rotations, 50).to_string()
     }
 }
 

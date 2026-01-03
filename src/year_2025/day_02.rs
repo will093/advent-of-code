@@ -1,4 +1,5 @@
 use crate::utils::solver::Solver;
+use crate::utils::parse::{AocParseExt, UnsignedIntParser};
 
 pub struct Day2Part1;
 pub struct Day2Part2;
@@ -20,7 +21,7 @@ impl Solver for Day2Part2 {
     fn label(&self) -> &str { "Day 2 Part 2" }
     fn solve(&self, input: &str) -> String {
         let get_factors: GetFactors =
-            Box::new(|l: u64, n: u64| if l % 2 == 0 { vec![l/2] } else { vec![] });
+            Box::new(|l: u64, _: u64| if l % 2 == 0 { vec![l/2] } else { vec![] });
         solve(input, &get_factors)
     }
 }
@@ -28,22 +29,21 @@ impl Solver for Day2Part2 {
 type GetFactors = Box<dyn Fn(u64,u64) -> Vec<u64>>;
 
 fn solve(input: &str, get_factors: &GetFactors) -> String {
-    let ranges: Vec<(u64, u64)> = input
-        .lines()
-        .next()
-        .unwrap()
-        .split(",")
-        .map(|x| {
-            let mut parts = x.split('-');
-            (
-                parts.next().unwrap().parse().unwrap(), 
-                parts.next().unwrap().parse().unwrap()
-            )
-        })
-        .collect();
+    let mut unsigned_parser: UnsignedIntParser<u64> = input.as_unsigned_iter();
+    let mut ranges: Vec<(u64, u64)> = vec![];
+    loop {
+        let start = match unsigned_parser.next() {
+            Some(val) => val,
+            None => break,
+        };
+        let end = match unsigned_parser.next() {
+            Some(val) => val,
+            None => break,
+        };
+        ranges.push((start, end))
+    }
 
-    let total = get_invalid_ids_total(ranges, get_factors);
-    total.to_string()
+    get_invalid_ids_total(ranges, get_factors).to_string()
 }
 
 fn get_invalid_ids_total(ranges: Vec<(u64, u64)>, get_factors: &GetFactors) -> u64 {
