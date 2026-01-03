@@ -5,12 +5,16 @@
 use std::{marker::PhantomData};
 
 pub trait AocParseExt<'a> {
-    fn as_unsigned_iter<T>(&'a self) -> UnsignedIntParser<'a, T>;
+    fn as_unsigned_iter<T>(&'a self) -> IntParser<'a, T>;
+    fn as_signed_iter<T>(&'a self) -> IntParser<'a, T>;
 }
 
 impl <'a>AocParseExt<'a> for &str {
-    fn as_unsigned_iter<T>(&'a self) -> UnsignedIntParser<'a, T> {
-        UnsignedIntParser::new(self)
+    fn as_unsigned_iter<T>(&'a self) -> IntParser<'a, T> {
+        IntParser::new(self, IntParserType::Unsigned)
+    }
+    fn as_signed_iter<T>(&'a self) -> IntParser<'a, T> {
+        IntParser::new(self, IntParserType::Signed)
     }
 }
 
@@ -24,18 +28,26 @@ impl <'a>AocParseExt<'a> for &str {
  * it.next() // None;
  * 
  */
-pub struct UnsignedIntParser<'a, T> {
+pub struct IntParser<'a, T> {
+    parser_type: IntParserType, // TODO: instead write SignedInteger and UnsignedInteger traits??
     input: std::slice::Iter<'a, u8>,
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<'a, T> UnsignedIntParser<'a, T> {
-    fn new(input: &'a str) -> Self {
-        Self { input: input.as_bytes().iter(), _marker: PhantomData }
+#[derive(PartialEq)]
+pub enum IntParserType {
+    Signed,
+    Unsigned,
+}
+
+
+impl<'a, T> IntParser<'a, T> {
+    fn new(input: &'a str, parser_type: IntParserType) -> Self {
+        Self { input: input.as_bytes().iter(), parser_type, _marker: PhantomData }
     }
 }
 
-impl<'a, T> Iterator for UnsignedIntParser<'a, T>
+impl<'a, T> Iterator for IntParser<'a, T>
 where
     T: std::str::FromStr,
     <T as std::str::FromStr>::Err: std::fmt::Debug,
@@ -51,7 +63,8 @@ where
         };
 
         while let Some(b) = self.input.next() {
-            if b.is_ascii_digit() {
+            if b.is_ascii_digit() 
+            || (digits.is_empty() && self.parser_type == IntParserType::Signed && *b == b'-') {
                 digits.push(*b);
             } else if !digits.is_empty() {
                 return Some(parse_digits(&digits));
@@ -70,10 +83,20 @@ mod tests {
 
     #[test]
     fn unsigned_int_parser_parses() {
-        let mut iter: UnsignedIntParser<u32> = "123,456,abc 789".as_unsigned_iter();
+        let mut iter: IntParser<u32> = "123,456,abc 789".as_unsigned_iter();
 
         assert_eq!(iter.next(), Some(123));
         assert_eq!(iter.next(), Some(456));
+        assert_eq!(iter.next(), Some(789));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn signed_int_parser_parses() {
+        let mut iter: IntParser<i32> = "123,-456,abc 789".as_signed_iter();
+
+        assert_eq!(iter.next(), Some(123));
+        assert_eq!(iter.next(), Some(-456));
         assert_eq!(iter.next(), Some(789));
         assert_eq!(iter.next(), None);
     }

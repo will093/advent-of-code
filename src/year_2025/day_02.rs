@@ -1,5 +1,5 @@
 use crate::utils::solver::Solver;
-use crate::utils::parse::{AocParseExt, UnsignedIntParser};
+use crate::utils::parse::{AocParseExt, IntParser};
 
 pub struct Day2Part1;
 pub struct Day2Part2;
@@ -29,7 +29,7 @@ impl Solver for Day2Part2 {
 type GetFactors = Box<dyn Fn(u64,u64) -> Vec<u64>>;
 
 fn solve(input: &str, get_factors: &GetFactors) -> String {
-    let mut unsigned_parser: UnsignedIntParser<u64> = input.as_unsigned_iter();
+    let mut unsigned_parser: IntParser<u64> = input.as_unsigned_iter();
     let mut ranges: Vec<(u64, u64)> = vec![];
     loop {
         let start = match unsigned_parser.next() {
