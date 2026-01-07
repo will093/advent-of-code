@@ -18,16 +18,29 @@ impl <'a>AocParseExt<'a> for &str {
     }
 }
 
-/*
- * A parser which allows for iterating through all unsigned integers in a &str.
- * 
- * let it = "1,2,a b c,3".as_unsigned_iter();
- * it.next() // Some(1);
- * it.next() // Some(2);
- * it.next() // Some(3);
- * it.next() // None;
- * 
- */
+/// A parser which allows for iterating through all unsigned integers in a &str.
+///
+/// # Examples
+///
+/// ```
+/// use advent::utils::parse::{AocParseExt, IntParser};
+///
+/// let mut it: IntParser<u32> = "1,2,a b c,3".as_unsigned_iter();
+/// assert_eq!(it.next(), Some(1));
+/// assert_eq!(it.next(), Some(2));
+/// assert_eq!(it.next(), Some(3));
+/// assert_eq!(it.next(), None);
+/// ```
+/// 
+/// ```
+/// use advent::utils::parse::{AocParseExt, IntParser};
+///
+/// let mut it: IntParser<i32> = "1,-2,a b c,3".as_signed_iter();
+/// assert_eq!(it.next(), Some(1));
+/// assert_eq!(it.next(), Some(-2));
+/// assert_eq!(it.next(), Some(3));
+/// assert_eq!(it.next(), None);
+/// ```
 pub struct IntParser<'a, T> {
     parser_type: IntParserType, // TODO: instead write SignedInteger and UnsignedInteger traits??
     input: std::slice::Iter<'a, u8>,
@@ -74,30 +87,5 @@ where
             return Some(parse_digits(&digits));
         }
         None   
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn unsigned_int_parser_parses() {
-        let mut iter: IntParser<u32> = "123,456,abc 789".as_unsigned_iter();
-
-        assert_eq!(iter.next(), Some(123));
-        assert_eq!(iter.next(), Some(456));
-        assert_eq!(iter.next(), Some(789));
-        assert_eq!(iter.next(), None);
-    }
-
-    #[test]
-    fn signed_int_parser_parses() {
-        let mut iter: IntParser<i32> = "123,-456,abc 789".as_signed_iter();
-
-        assert_eq!(iter.next(), Some(123));
-        assert_eq!(iter.next(), Some(-456));
-        assert_eq!(iter.next(), Some(789));
-        assert_eq!(iter.next(), None);
     }
 }

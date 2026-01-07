@@ -1,11 +1,9 @@
-use crate::utils::bitset::BitOps;
+use std::env::var;
+use std::iter::zip;
+
 use crate::utils::solver::Solver;
-use regex::Regex;
-use rand::Rng;
-use good_lp::{variables, variable, SolverModel, Solution, constraint};
-use good_lp::solvers::coin_cbc;
-use std::time::Instant;
-use crate::utils::parse::{AocParseExt, IntParser};
+use crate::utils::parse::{AocParseExt};
+use itertools::Itertools;
 
 pub struct Day10Part1;
 pub struct Day10Part2;
@@ -25,247 +23,10 @@ impl Solver for Day10Part2 {
     fn day(&self) -> &str { "10" }
     fn label(&self) -> &str { "Day 10 Part 2" }
     fn solve(&self, input: &str) -> String {
-        let parse = parse(input);
-        "".to_string()
+        let mut parsed = parse(input);
+        solve_two(&mut parsed)
     }
 }
-
-// #[derive(Debug)]
-// struct Machine {
-//     joltage_current: Vec<i32>,
-//     joltage_configured: Vec<i32>,
-//     indicators_current: Vec<bool>,
-//     indicators_configured: Vec<bool>,
-//     switches: Vec<Vec<usize>>,
-//     switches_matrix: Vec<Vec<i32>>
-// }
-
-// impl Machine {
-
-//     fn pull_switch_config(&mut self, i: usize) {
-//         let switch = &self.switches[i];
-//         for n in switch {
-//             self.indicators_current[*n] = !self.indicators_current[*n];
-//         }
-//     }
-
-//     fn safe_pull_switch_joltage(&mut self, i: usize) -> bool {
-//         let switch = &self.switches[i];
-
-//         let mut safe = true;
-
-//         for n in switch {
-//             if self.joltage_current[*n] + 1 > self.joltage_configured[*n] {
-//                 safe = false;
-//             }
-//         }
-//         if safe {
-//             for n in switch {
-//                 self.joltage_current[*n] += 1;
-//             }
-//         }
-//         safe
-//     }
-
-//     fn new(joltage_configured: Vec<i32>, indicators_configured: Vec<bool>, switches: Vec<Vec<usize>>) -> Machine {
-
-//         let mut machine = Self {
-//             joltage_configured,
-//             indicators_configured,
-//             switches,
-//             joltage_current: vec![],
-//             indicators_current: vec![],
-//             switches_matrix: vec![],
-//         };
-
-//         machine.reset();
-
-//         machine.switches_matrix = transpose(machine.switches
-//             .iter()
-//             .map(|s| {
-//                 let mut row: Vec<_> = machine.joltage_current.iter().map(|_| 0).collect();
-//                 for n in s {
-//                     row[*n] = 1;
-//                 }
-//                 row
-//             })
-//             .collect());
-
-//         machine
-//     }
-
-//     fn reset(&mut self) {
-//         self.indicators_current = self.indicators_configured.iter().map(|_| false).collect();
-//         self.joltage_current = self.joltage_configured.iter().map(|_| 0).collect();
-//     }
-
-//     fn solve_with_good_lp(&self) -> i32 {
-//         let mut vars = variables!();
-
-//         let sw_vars: Vec<_> = self.switches
-//             .iter()
-//             .map(|_| vars.add(variable().min(0).integer()))
-//             .collect();
-
-//         let mut problem = vars
-//             .minimise(sw_vars.iter().sum::<good_lp::Expression>())
-//             .using(coin_cbc::coin_cbc);
-
-
-//         let constraints: Vec<_> = self.switches_matrix
-//             .iter()
-//             .zip(&self.joltage_configured)
-//             .map(|(sw_row, jolts)| { 
-//                 let expr = sw_row.iter().zip(&sw_vars).fold(0.into(), |acc, (c, x)| *c * *x + acc);
-//                 constraint!(expr == *jolts)
-//             })
-//             .collect();
-
-//         for c in constraints {
-//             problem = problem.with(c);
-//         }
-
-//         let solution = problem.solve().unwrap();
-
-//         let min_pulls: i32 = sw_vars.iter().map(|v| solution.value(*v) as i32).sum();
-
-//         min_pulls
-//     }
-// }
-
-// fn transpose<T: Clone>(matrix: Vec<Vec<T>>) -> Vec<Vec<T>> {
-//     if matrix.is_empty() { return vec![]; }
-//     let row_len = matrix[0].len();
-//     (0..row_len)
-//         .map(|i| matrix.iter().map(|row| row[i].clone()).collect())
-//         .collect()
-// }
-
-// fn solve(input: &str) -> (String, String) {
-//     let start = Instant::now();
-    
-//     let machines: Vec<Machine> = input
-//         .lines()
-//         .map(|line| {
-//             let indicators_re = Regex::new(r"\[(.*?)\]").unwrap();
-//             let indicators_configured: Vec<bool> = indicators_re
-//                 .captures_iter(line)
-//                 .next()
-//                 .unwrap()
-//                 .get(1)
-//                 .unwrap()
-//                 .as_str()
-//                 .split("")
-//                 .filter(|x| x.len() > 0)
-//                 .map(|x| if x == "#" { true } else { false })
-//                 .collect();
-
-//             let switches_re = Regex::new(r"\((.*?)\)").unwrap();
-
-//             let switches: Vec<Vec<usize>> = switches_re
-//                 .captures_iter(line)
-//                 .filter_map(|cap| cap.get(1).map(|m| m.as_str()))
-//                 .map(|s| s.split(",").map(|x| x.parse().unwrap()).collect())
-//                 .collect();
-
-//             let joltage_re = Regex::new(r"\{(.*?)\}").unwrap();
-//             let joltage_configured: Vec<i32> = joltage_re
-//                 .captures_iter(line)
-//                 .next()
-//                 .unwrap()
-//                 .get(1)
-//                 .unwrap()
-//                 .as_str()
-//                 .split(",")
-//                 .map(|x| x.parse().unwrap())
-//                 .collect();
-
-//             Machine::new(
-//                 joltage_configured,
-//                 indicators_configured,
-//                 switches,
-//             )
-//         })
-//         .collect();
-
-//     let min_pulls_total: i32 = machines.iter().map(|m| m.solve_with_good_lp()).sum();
-
-//     (0.to_string(), min_pulls_total.to_string())
-// }
-
-
-// fn configure_joltage(machines: &mut Vec<Machine>) -> i32 {
-//     let mut rng = rand::thread_rng();
-
-//     let total = machines
-//         .iter_mut()
-//         .fold(0, |sum, machine| {
-//             let mut min_pull_count = 10000;
-
-//             let mut found_correct = false;
-//             for _ in 0..10000 {
-//                 machine.reset();
-
-//                 let mut pull_count = 0;
-//                 for _ in 0..1000 {
-//                     if machine.joltage_current == machine.joltage_configured {
-//                         found_correct = true;
-//                         break;
-//                     }
-
-//                     let rand_switch_index = rng.gen_range(0..machine.switches.len());
-//                     let did_pull = machine.safe_pull_switch_joltage(rand_switch_index);
-
-//                     if !did_pull {
-//                         continue;
-//                     }
-
-//                     pull_count += 1
-//                 }
-
-//                 min_pull_count = min_pull_count.min(pull_count);
-//             }
-
-//             if min_pull_count == 10000 || !found_correct {
-//                 panic!("Joltage could not be configured!");
-//             }
-
-//             sum + min_pull_count
-//         });
-
-//     total
-// }
-
-// fn configure_indicators(machines: &mut Vec<Machine>) -> i32 {
-//     let mut rng = rand::thread_rng();
-
-//     let total = machines
-//         .iter_mut()
-//         .fold(0, |sum, machine| {
-//             let mut min_pull_count = 10000;
-
-//             for _ in 0..10000 {
-//                 machine.reset();
-
-//                 let mut pull_count = 0;
-//                 loop {
-//                     if machine.indicators_current == machine.indicators_configured {
-//                         break;
-//                     }
-
-//                     let rand_switch_index = rng.gen_range(0..machine.switches.len());
-//                     machine.pull_switch_config(rand_switch_index);
-//                     pull_count += 1
-//                 }
-
-//                 min_pull_count = min_pull_count.min(pull_count);
-//             }
-
-//             sum + min_pull_count
-//         });
-
-//     total
-// }
 
 type Machine = (usize, Vec<usize>, Vec<i32>);
 type Input = (Vec<i32>, Vec<i32>);
@@ -301,34 +62,203 @@ fn solve_one(machines: &mut Vec<Machine>) -> String {
     machines
         .iter()
         .map(|m| configure_lights(m))
-        .sum::<i32>()
+        .sum::<u32>()
         .to_string()
 } 
 
-fn configure_lights((lights, buttons, _): &Machine) -> i32 {
-    let limit = 1 << buttons.len();
-    let mut set = 0;
+fn configure_lights((lights, buttons, _): &Machine) -> u32 {
+    let mut pushes: u32 = 0;
 
-    // Try all combinations of 1 button push, then 2, then 3 etc until we find the minimum no of presses...
-    loop {
-        set += 1;
-        let mut n = (1 << set) - 1;
+    // We try all combinations of 1, 2... etc. pushes until we find one which works.
+    loop { 
+        let results: Vec<usize> = buttons
+            .iter()
+            .combinations(pushes as usize)
+            .map(|combo| combo.into_iter().fold(0, |acc, b| acc ^ b))
+            .collect();
 
-        while n < limit {
-            if *lights == n.biterator().fold(0, |acc, i| acc ^ buttons[i]) {
-                return set;
+        for result in results {
+            if result == *lights {
+                return pushes
             }
-            n = next_same_bits(n);
         }
+
+        pushes += 1;
     }
 }
 
-/// Find the next highest integer with the same number of one bits as the previous integer,
-/// for example 1011 => 1110.
-fn next_same_bits(n: i32) -> i32 {
-    let smallest = n & -n;
-    let ripple = n + smallest;
-    let ones = n ^ ripple;
-    let next = (ones >> 2) / smallest;
-    ripple | next
+fn solve_two(machines: &mut Vec<Machine>) -> String {
+    machines
+        .iter()
+        .map(|m| configure_joltage(m))
+        .sum::<u32>()
+        .to_string()
+} 
+
+
+fn configure_joltage((_, buttons, joltages): &Machine) -> u32 {
+    
+    // Step 1: Build a system of linear equations from the buttons and joltages
+    let width = buttons.len() + 1;
+    let height = joltages.len();
+
+    let mut equations: Vec<Vec<i32>> = vec![vec![0; width]; height];
+
+    for ((i, eq), joltage) in equations.iter_mut().enumerate().zip(joltages) {
+        eq[width - 1] = *joltage;
+
+        for (j, b) in buttons.iter().enumerate() {
+            if (b & (1 << i)) != 0 {
+                eq[j] = 1;
+            }
+        }
+
+    }
+
+
+    println!("original");
+    print_matrix(&equations);
+
+    // Step 2: convert to row echelon form using Gaussian elimination
+    let mut pivot_row = 0;
+    'outer: for col in 0..(width-1) {
+        // Find the first row where col is not zero and can be reduced to 1.
+        while let Some((row_index, _)) = equations[pivot_row..].iter().find_position(|&eq| eq[col] != 0 && eq.iter().all(|v| v % eq[col] == 0)) {
+            let pivot_col = col;
+            // Put the pivot row into the right position for row echelon form.
+            equations.swap(pivot_row, row_index + pivot_row);
+
+            let (pivot_equation, remaining_equations) = equations[pivot_row..].split_at_mut(1);
+            
+            // Divide each col in pivot row by pivot col (make pivot col equal to 1).
+            pivot_equation[0] = pivot_equation[0].iter().map(|col| col / pivot_equation[0][pivot_col]).collect();
+
+
+            for eq in remaining_equations.iter_mut() {
+                let multiple = eq[pivot_col];
+                for i in 0..eq.len() {
+                    eq[i] = eq[i] - (multiple * pivot_equation[0][i]);
+                }
+            }
+
+            pivot_row += 1;
+            if pivot_row >= height {
+                break 'outer;
+            }
+        }
+    }
+
+    println!("row echelon");
+    print_matrix(&equations);
+
+    // Step 3: Brute force the free variables
+    let variables: Vec<Option<i32>> = vec![None; width - 1];
+    let solutions = get_solutions(&variables, &equations);
+
+    // println!("Solutions");
+    // dbg!(&solutions);
+
+    // Approach - give each variable a min and max, generate these combinations, calculate which solve the problem 
+    // and then return the minimum of these.
+
+
+    solutions.len() as u32
+}
+
+fn get_solutions(variables: &Vec<Option<i32>>, equations: &Vec<Vec<i32>>) -> Vec<Vec<Option<i32>>> {
+    // println!("vars {:?}", variables);
+    for eq in equations.iter().rev() {
+
+        let rhs = *eq.iter().last().expect("equation should have variables");
+        let lhs = &eq[..(eq.len()-1)];
+
+        // Find the first free variable if there is one
+        let free_var = lhs.iter().zip(variables).find_position(|&(coeff, var)| {
+            *coeff != 0 && *var == None
+        });
+
+        // println!("free var {:?} {} {:?}", &free_var, rhs, eq);
+        match free_var {
+            // No free variables - check if it is a correct solution.
+            None => {
+                // println!("solution found {:?} {:?}", variables, eq);
+                let sum_lhs = lhs.iter()
+                    .zip(variables)
+                    .fold(0,|acc, (coeff, var)| {
+                        if *coeff == 0 {
+                            return acc;
+                        } else {
+                            return var.expect("already established no free vars with non-zero coefficient") * coeff + acc
+                        }
+                    });
+                if rhs == sum_lhs {
+                    continue;
+                } else {
+                    return vec![];
+                }
+            },
+            // Has a free variable - so we try fixing it to each possible value
+            Some((index, _)) => {
+                return (0..=40).flat_map(|value| {
+                    let mut try_variables = variables.clone();
+                    try_variables[index] = Some(value);
+                    // println!("Vars to try");
+                    // dbg!(&try_variables);
+                    // get_solutions(&try_variables, equations)
+                    return vec![];
+                }).collect()
+            },
+            Some(_) => panic!("Should not reach this")
+        }
+    }
+
+    vec![variables.clone()]
+}
+
+// TODO: move to helper
+fn print_matrix(matrix: &Vec<Vec<i32>>) {
+    for row in matrix {
+        for val in row {
+            print!("{:4} ", val); // Adjust width as needed
+        }
+        println!();
+    }
+}
+
+mod tests {
+
+    use crate::year_2025::day_11::Day11Part2;
+
+    use super::*;
+
+    #[test]
+    fn configure_lights_one_push() {
+        let machine = (4, vec![4, 5], vec![]);
+        let res = configure_lights(&machine);
+        assert_eq!(res, 1);
+    }
+
+
+    #[test]
+    fn configure_lights_two_pushes() {
+        let machine = (4, vec![5, 1, 2], vec![]);
+        let res = configure_lights(&machine);
+        assert_eq!(res, 2);
+    }
+
+    // #[test]
+    // fn configure_joltages_simple() {
+    //     let input = "[#.##] (0) (0,2,3) (1,2) (2,3) {15,8,19,11}";
+    //     let solver = Day10Part2;
+    //     let res = solver.solve(input);
+    //     assert_eq!(res, "99");
+    // }
+
+    #[test]
+    fn configure_joltages_hard() {
+        let input = "[.#.....##.] (0,3,6,9) (1,2,4,6,7,8,9) (0,5,9) (0,1,2,4,7,8) (0,6,7,8,9) (3,4,5,6,7,8) (0,3,5,7) (2,3,4,6,7) (2,3,4,5,6,7,8) (1,2,6,9) (2,7,8) (0) (0,2,3,4,5,6,7,9) {71,46,95,181,172,148,199,205,151,71}";
+        let solver = Day10Part2;
+        let res = solver.solve(input);
+        assert_eq!(res, "99");
+    }
 }
