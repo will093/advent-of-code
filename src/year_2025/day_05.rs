@@ -1,28 +1,30 @@
-use crate::utils::solver::Solver;
+use crate::define_solver;
 
-pub struct Day5Part1;
-pub struct Day5Part2;
+define_solver!(
+    Day5Solver,
+    "2025",
+    "05",
+    (String, String),
+    preprocess,
+    part_one,
+    part_two
+);
+
+fn preprocess(input: &str) -> (String, String) {
+    solve(input)
+}
+
+fn part_one((one, _): &(String, String)) -> String {
+    one.clone()
+}
+
+fn part_two((_, two): &(String, String)) -> String {
+    two.clone()
+}
+
 
 #[derive(Debug, Clone)]
 struct Range { start: u64, end: u64 }
-
-impl Solver for Day5Part1 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "05" }
-    fn label(&self) -> &str { "Day 5 Part 1" }
-    fn solve(&self, input: &str) -> String {
-        solve(input).0
-    }
-}
-
-impl Solver for Day5Part2 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "05" }
-    fn label(&self) -> &str { "Day 5 Part 2" }
-    fn solve(&self, input: &str) -> String {
-        solve(input).1
-    }
-}
 
 fn solve(input: &str) -> (String, String) {
     let mut fresh_id_ranges: Vec<Range> = vec![];

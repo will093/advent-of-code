@@ -1,15 +1,27 @@
-use crate::utils::solver::Solver;
+use crate::define_solver;
 
-pub struct Day12;
+define_solver!(
+    Day12Solver,
+    "2025",
+    "12",
+    (String, String),
+    preprocess,
+    part_one,
+    part_two
+);
 
-impl Solver for Day12 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "12" }
-    fn label(&self) -> &str { "Day 12 Part 1" }
-    fn solve(&self, input: &str) -> String {
-        solve(input)
-    }
+fn preprocess(input: &str) -> (String, String) {
+    solve(input)
 }
+
+fn part_one((one, _): &(String, String)) -> String {
+    one.clone()
+}
+
+fn part_two((_, two): &(String, String)) -> String {
+    two.clone()
+}
+
 
 #[derive(Debug)]
 struct Region {
@@ -18,7 +30,7 @@ struct Region {
     shape_counts: Vec<u32>,
 }
 
-fn solve(input: &str)-> String {
+fn solve(input: &str)-> (String, String) {
 
     let mut lines = input.lines();
 
@@ -81,5 +93,5 @@ fn solve(input: &str)-> String {
         fit_count += 1;
     }
 
-    fit_count.to_string()
+    (fit_count.to_string(), "Merry Xmas!".to_string())
 }

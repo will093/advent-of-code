@@ -1,26 +1,28 @@
-use crate::utils::solver::Solver;
+use crate::define_solver;
 use std::collections::{HashSet};
-pub struct Day8Part1;
-pub struct Day8Part2;
 
+define_solver!(
+    Day8Solver,
+    "2025",
+    "08",
+    (String, String),
+    preprocess,
+    part_one,
+    part_two
+);
 
-impl Solver for Day8Part1 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "08" }
-    fn label(&self) -> &str { "Day 8 Part 1" }
-    fn solve(&self, input: &str) -> String {
-        solve(input).0
-    }
+fn preprocess(input: &str) -> (String, String) {
+    solve(input)
 }
 
-impl Solver for Day8Part2 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "08" }
-    fn label(&self) -> &str { "Day 8 Part 2" }
-    fn solve(&self, input: &str) -> String {
-        solve(input).1
-    }
+fn part_one((one, _): &(String, String)) -> String {
+    one.clone()
 }
+
+fn part_two((_, two): &(String, String)) -> String {
+    two.clone()
+}
+
 
 #[derive(Clone)]
 struct Junction {

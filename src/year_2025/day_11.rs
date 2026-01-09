@@ -1,26 +1,28 @@
+use crate::define_solver;
 use std::collections::HashMap;
-use crate::utils::solver::Solver;
 
-pub struct Day11Part1;
-pub struct Day11Part2;
+define_solver!(
+    Day11Solver,
+    "2025",
+    "11",
+    (String, String),
+    preprocess,
+    part_one,
+    part_two
+);
 
-impl Solver for Day11Part1 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "11" }
-    fn label(&self) -> &str { "Day 11 Part 1" }
-    fn solve(&self, input: &str) -> String {
-        solve(input).0
-    }
+fn preprocess(input: &str) -> (String, String) {
+    solve(input)
 }
 
-impl Solver for Day11Part2 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "11" }
-    fn label(&self) -> &str { "Day 11 Part 2" }
-    fn solve(&self, input: &str) -> String {
-        solve(input).1
-    }
+fn part_one((one, _): &(String, String)) -> String {
+    one.clone()
 }
+
+fn part_two((_, two): &(String, String)) -> String {
+    two.clone()
+}
+
 
 struct Device {
     id: String,

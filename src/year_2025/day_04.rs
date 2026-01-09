@@ -1,25 +1,26 @@
-use crate::utils::solver::Solver;
+use crate::define_solver;
 use std::u32;
 
-pub struct Day4Part1;
-pub struct Day4Part2;
+define_solver!(
+    Day4Solver,
+    "2025",
+    "04",
+    String,
+    preprocess,
+    part_one,
+    part_two
+);
 
-impl Solver for Day4Part1 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "04" }
-    fn label(&self) -> &str { "Day 4 Part 1" }
-    fn solve(&self, input: &str) -> String {
-        solve(input, false)
-    }
+fn preprocess(input: &str) -> String {
+    String::from(input)
 }
 
-impl Solver for Day4Part2 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "04" }
-    fn label(&self) -> &str { "Day 4 Part 2" }
-    fn solve(&self, input: &str) -> String {
-        solve(input, true)
-    }
+fn part_one(input: &str) -> String {
+    solve(input, false)
+}
+
+fn part_two(input: &str) -> String {
+    solve(input, true)
 }
 
 fn solve(input: &str, multi_iter: bool) -> String {

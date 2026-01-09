@@ -1,29 +1,30 @@
-use crate::utils::solver::Solver;
+use crate::define_solver;
 use crate::utils::parse::{AocParseExt, IntParser};
 
-pub struct Day2Part1;
-pub struct Day2Part2;
+define_solver!(
+    Day2Solver,
+    "2025",
+    "02",
+    String,
+    preprocess,
+    part_one,
+    part_two
+);
 
-impl Solver for Day2Part1 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "02" }
-    fn label(&self) -> &str { "Day 2 Part 1" }
-    fn solve(&self, input: &str) -> String {
-        let get_factors: GetFactors =
-            Box::new(|length: u64, n: u64| if length % n == 0 { vec![n, length/n] } else { vec![] });
-        solve(input, &get_factors)
-    }
+fn preprocess(input: &str) -> String {
+    String::from(input)
 }
 
-impl Solver for Day2Part2 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "02" }
-    fn label(&self) -> &str { "Day 2 Part 2" }
-    fn solve(&self, input: &str) -> String {
-        let get_factors: GetFactors =
-            Box::new(|l: u64, _: u64| if l % 2 == 0 { vec![l/2] } else { vec![] });
-        solve(input, &get_factors)
-    }
+fn part_one(input: &str) -> String {
+    let get_factors: GetFactors =
+        Box::new(|length: u64, n: u64| if length % n == 0 { vec![n, length/n] } else { vec![] });
+    solve(input, &get_factors)
+}
+
+fn part_two(input: &str) -> String {
+    let get_factors: GetFactors =
+        Box::new(|l: u64, _: u64| if l % 2 == 0 { vec![l/2] } else { vec![] });
+    solve(input, &get_factors)
 }
 
 type GetFactors = Box<dyn Fn(u64,u64) -> Vec<u64>>;

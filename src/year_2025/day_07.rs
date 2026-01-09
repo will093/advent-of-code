@@ -1,28 +1,21 @@
-use crate::utils::solver::Solver;
+use crate::define_solver;
 use std::collections::HashMap;
 
-pub struct Day7Part1;
-pub struct Day7Part2;
+define_solver!(
+    Day7Solver,
+    "2025",
+    "07",
+    String,
+    preprocess,
+    part_one,
+    part_two
+);
 
-impl Solver for Day7Part1 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "07" }
-    fn label(&self) -> &str { "Day 7 Part 1" }
-    fn solve(&self, input: &str) -> String {
-        solve_one(input)
-    }
+fn preprocess(input: &str) -> String {
+    String::from(input)
 }
 
-impl Solver for Day7Part2 {
-    fn year(&self) -> &str { "2025" }
-    fn day(&self) -> &str { "07" }
-    fn label(&self) -> &str { "Day 7 Part 2" }
-    fn solve(&self, input: &str) -> String {
-        solve_two(input)
-    }
-}
-
-fn solve_one(input: &str) -> String  {
+fn part_one(input: &str) -> String  {
     let char_grid: Vec<Vec<_>> = input.lines()
         .map(|line| line.chars().collect())
         .collect();
@@ -39,7 +32,7 @@ fn solve_one(input: &str) -> String  {
     total_splits.to_string()
 }
 
-fn solve_two(input: &str) -> String {
+fn part_two(input: &str) -> String {
     let char_grid: Vec<Vec<_>> = input.lines()
         .map(|line| line.chars().collect())
         .collect();
