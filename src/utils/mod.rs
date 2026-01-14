@@ -4,3 +4,4 @@ pub mod parse;
 pub mod bitset;
 pub mod integer;
 pub mod performance;
+pub mod math;

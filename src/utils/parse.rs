@@ -7,6 +7,7 @@ use std::{marker::PhantomData};
 pub trait AocParseExt<'a> {
     fn as_unsigned_iter<T>(&'a self) -> IntParser<'a, T>;
     fn as_signed_iter<T>(&'a self) -> IntParser<'a, T>;
+    fn to_char_grid(&'a self) -> Vec<Vec<char>>;
 }
 
 impl <'a>AocParseExt<'a> for &str {
@@ -15,6 +16,13 @@ impl <'a>AocParseExt<'a> for &str {
     }
     fn as_signed_iter<T>(&'a self) -> IntParser<'a, T> {
         IntParser::new(self, IntParserType::Signed)
+    }
+    fn to_char_grid(&'a self) -> Vec<Vec<char>> {
+        self
+            .lines()
+            .into_iter()
+            .map(|line| line.chars().collect())
+            .collect()
     }
 }
 

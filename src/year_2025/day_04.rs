@@ -1,5 +1,6 @@
-use crate::define_solver;
-use std::u32;
+use crate::{define_solver, utils::parse::AocParseExt};
+use itertools::iproduct;
+
 
 define_solver!(
     Day4Solver,
@@ -24,29 +25,18 @@ fn part_two(input: &str) -> String {
 }
 
 fn solve(input: &str, multi_iter: bool) -> String {
-    let mut grid: Vec<Vec<char>> = input
-        .lines()
-        .into_iter()
-        .map(|line| line
-            .chars()
-            .collect()
-        )
-        .collect();
-
+    let mut grid: Vec<Vec<char>> = input.to_char_grid();
     let mut accessible_count = 0;
 
-    let iter_count = if multi_iter { u32::MAX } else { 1 };
-    for _ in 0..iter_count {
+    loop {
         let mut iteration_accessible_count = 0;
-        for i in 0..grid.len() {
-            for j in 0..grid[0].len() {
-                if is_accessible(&grid, i as i32, j as i32) {
-                    iteration_accessible_count += 1;
-                    if multi_iter {
-                        grid[i][j] = 'X';
-                    }
-                };
-            }
+        for (i, j) in iproduct!(0..grid.len(), 0..grid[0].len()) {
+            if is_accessible(&grid, i as i32, j as i32) {
+                iteration_accessible_count += 1;
+                if multi_iter {
+                    grid[i][j] = 'X';
+                }
+            };
         }
 
         if iteration_accessible_count == 0 {
@@ -54,6 +44,10 @@ fn solve(input: &str, multi_iter: bool) -> String {
         }
 
         accessible_count += iteration_accessible_count;
+
+        if !multi_iter {
+            break;
+        }
     }
     accessible_count.to_string()
 }

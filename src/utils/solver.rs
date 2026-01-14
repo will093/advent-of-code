@@ -36,9 +36,15 @@ macro_rules! define_solver {
 }
 
 pub trait Solver<T>: SolverDyn {
+
     fn solve_one(input: &T) -> String;
+
     fn solve_two(input: &T) -> String;
+
+    /// Put any work which should be executed for both part 1 and part 2 here.
+    /// eg. parsing logic.
     fn preprocess(input: &str) -> T;
+
     fn solve<'a>(&self, input:  &'a str) -> (String, String) {
         println!("\n- - - - - {} day {} - - - - -", self.year(), self.day());
         let data = time_execution!(format!("Preprocessing"), Self::preprocess(input));

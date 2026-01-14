@@ -25,25 +25,23 @@ fn part_two(input: &str) -> String {
 fn solve(input: &str, digit_count: usize) -> String {
     input.lines()
         .into_iter()
-        .map(|bank| { 
+        .map(|bank| 
             bank.chars()
-                .map(|x| x.to_digit(10).unwrap())
+                .map(|x| x.to_digit(10).expect("all chars in each line should be digits"))
                 .collect()
-        })
-        .fold(0, |sum, bank| 
-            sum + find_max_digits(bank, digit_count)
         )
+        .fold(0, |sum, bank| sum + find_max_digits(bank, digit_count))
         .to_string()
 }
 
 fn find_max_digits(nums: Vec<u32>, digit_count: usize) -> u64 {
     (0..digit_count)
-        .fold((-1, "".to_string()), |(prev_max_index, joltage), i| {
+        .fold((-1, String::new()), |(prev_max_index, joltage), i| {
             let start_from = (prev_max_index + 1) as usize;
             let end_at = nums.len() - (digit_count - 1) + i as usize;
             let max_index = prev_max_index 
                 + 1 
-                + find_max_index(nums[start_from..end_at].to_vec());
+                + find_max_index(&nums[start_from..end_at].to_vec());
             (
                 max_index,
                 format!("{}{}", joltage, nums[max_index as usize])
@@ -54,7 +52,7 @@ fn find_max_digits(nums: Vec<u32>, digit_count: usize) -> u64 {
         .unwrap()
 }
 
-fn find_max_index(nums: Vec<u32>) -> i32 {
+fn find_max_index(nums: &Vec<u32>) -> i32 {
     nums
         .iter()
         .enumerate()
@@ -64,8 +62,7 @@ fn find_max_index(nums: Vec<u32>) -> i32 {
                 if n > max { i } else { max_index },
             )
         })
-        .1
-        as i32
+        .1 as i32
 }
 
 
@@ -75,13 +72,13 @@ mod tests {
 
     #[test]
     fn find_max_index_no_repitions() {
-        let res = find_max_index(vec![3,7,1,9,8,4]);
+        let res = find_max_index(&vec![3,7,1,9,8,4]);
         assert_eq!(res, 3);
     }
 
     #[test]
     fn find_max_index_with_repitions() {
-        let res = find_max_index(vec![3,7,8,4,8]);
+        let res = find_max_index(&vec![3,7,8,4,8]);
         assert_eq!(res, 2);
     }
 
