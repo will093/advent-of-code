@@ -28,8 +28,7 @@ fn part_two(input: &str) -> String {
         let col_operator = rows[rows.len() - 1][i];
 
         let is_spacer_col = rows
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|row| row[i] != " ")
             .count() == 0;
 

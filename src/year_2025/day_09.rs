@@ -16,11 +16,11 @@ fn preprocess(input: &str) -> (String, String) {
 }
 
 fn part_one((one, _): &(String, String)) -> String {
-    one.clone()
+    String::from(one)
 }
 
 fn part_two((_, two): &(String, String)) -> String {
-    two.clone()
+    String::from(two)
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]

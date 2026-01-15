@@ -51,7 +51,7 @@ fn count_zero_clicks(rotations: &Rotations, start: i32, dial_size: i32) -> i32 {
 }
 
 fn rotation_to_num(val: &str) -> i32 {
-    let mut num: i32 = val.as_unsigned_iter().next().expect("val contains exactly 1 integer");
+    let mut num: i32 = val.as_signed_iter().next().expect("val contains exactly 1 integer");
     if val.starts_with('L') {
         num *= -1;
     }

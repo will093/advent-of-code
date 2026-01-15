@@ -1,27 +1,4 @@
-use crate::define_solver;
-
-define_solver!(
-    Day12Solver,
-    "2025",
-    "12",
-    (String, String),
-    preprocess,
-    part_one,
-    part_two
-);
-
-fn preprocess(input: &str) -> (String, String) {
-    solve(input)
-}
-
-fn part_one((one, _): &(String, String)) -> String {
-    one.clone()
-}
-
-fn part_two((_, two): &(String, String)) -> String {
-    two.clone()
-}
-
+use crate::{define_solver, utils::parse::{AocParseExt, IntParser}};
 
 #[derive(Debug)]
 struct Region {
@@ -30,11 +7,25 @@ struct Region {
     shape_counts: Vec<u32>,
 }
 
-fn solve(input: &str)-> (String, String) {
+struct PresentProblems {
+    present_sizes: Vec<u32>,
+    regions: Vec<Region>
+}
 
+define_solver!(
+    Day12Solver,
+    "2025",
+    "12",
+    PresentProblems,
+    preprocess,
+    part_one,
+    part_two
+);
+
+fn preprocess(input: &str) -> PresentProblems {
     let mut lines = input.lines();
 
-    let mut block_counts = vec![];
+    let mut present_sizes = vec![];
     for _ in 0..6 {
         let _index = lines.next(); 
         let row_1 = lines.next().unwrap(); 
@@ -42,7 +33,10 @@ fn solve(input: &str)-> (String, String) {
         let row_3 = lines.next().unwrap();  
         let _blank = lines.next(); 
 
-        let row_to_bool = |row: &str| row.split("").filter(|&c| c.len() > 0).map(|c| c == "#").collect();
+        let row_to_bool = |row: &str| row.split("")
+            .filter(|&c| c.len() > 0)
+            .map(|c| c == "#")
+            .collect();
 
         let shape: Vec<Vec<_>> = vec![
             row_to_bool(row_1),
@@ -50,48 +44,47 @@ fn solve(input: &str)-> (String, String) {
             row_to_bool(row_3),
         ];
 
-        let mut block_count = 0;
+        let mut present_size = 0;
         for row in &shape {
             for cell in row {
                 if *cell {
-                    block_count += 1;
+                    present_size += 1;
                 }
             }
         }
 
-        block_counts.push(block_count);
+        present_sizes.push(present_size);
     }
 
     let regions: Vec<_> = lines
         .map(|l| {
-            let mut segments = l.split(" ").filter(|l| l.len() > 0);
-            let width_height = segments.next().unwrap();
-            let width: u32 = width_height[0..2].parse().unwrap();
-            let height: u32 = width_height[3..5].parse().unwrap();
-            let shape_counts: Vec<u32> = segments.map(|s| s.trim().parse().unwrap()).collect();
-
+            let mut line_parser: IntParser<u32> = l.as_unsigned_iter();
+            let width: u32 = line_parser.next().unwrap();
+            let height: u32 = line_parser.next().unwrap();
+            let shape_counts: Vec<u32> = line_parser.collect();
             Region { width, height, shape_counts }
         })
         .collect();
 
-    let mut fit_count = 0;
-    for i in 0..regions.len() {
-        let r = &regions[i];
-        let region_area = r.width * r.height;
+    PresentProblems { present_sizes, regions }
+}
 
-        let shape_area: u32 = r.shape_counts
-            .iter()
-            .enumerate()
-            .map(|(j, c)| c * block_counts[j])
-            .sum();
+fn part_one(input: &PresentProblems) -> String {
+    solve(input).to_string()
+}
 
+fn part_two(_: &PresentProblems) -> String {
+    "Merry Xmas!".to_string()
+}
 
-        if region_area <= shape_area {
-            continue;
-        }
-
-        fit_count += 1;
-    }
-
-    (fit_count.to_string(), "Merry Xmas!".to_string())
+fn solve(PresentProblems { present_sizes, regions }: &PresentProblems)-> usize {
+    regions.iter()
+        .filter(|&r|
+            r.width * r.height > r.shape_counts
+                .iter()
+                .enumerate()
+                .map(|(j, c)| c * present_sizes[j])
+                .sum()
+        )
+        .count()
 }

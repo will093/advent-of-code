@@ -4,21 +4,33 @@ use crate::define_solver;
 use crate::utils::parse::{AocParseExt, IntParser};
 use crate::utils::math;
 
+#[derive(Debug, Clone, Copy)]
+struct Range { start: u64, end: u64 }
+
 define_solver!(
     Day2Solver,
     "2025",
     "02",
-    String,
+    Vec<Range>,
     preprocess,
     part_one,
     part_two
 );
 
-fn preprocess(input: &str) -> String {
-    String::from(input)
+fn preprocess(input: &str) -> Vec<Range> {
+    let mut unsigned_parser: IntParser<u64> = input.as_unsigned_iter();
+    let mut ranges: Vec<Range> = vec![];
+    loop {
+        match (unsigned_parser.next(), unsigned_parser.next()) {
+            (Some(start), Some(end)) => ranges.push(Range { start, end }),
+            (None, None) => break,
+            _ => panic!("each start of range sould have a corresponding end")
+        };
+    }
+    ranges
 }
 
-fn part_one(input: &str) -> String {
+fn part_one(input: &Vec<Range>) -> String {
     let get_repeater_lengths_part_one: GetRepeaterLengths =
         Box::new(|digit_count: u64| {
             if digit_count % 2 == 0 {
@@ -27,13 +39,13 @@ fn part_one(input: &str) -> String {
                 vec![]
             }
         });
-    solve(input, &get_repeater_lengths_part_one)
+    get_invalid_ids_total(input, &get_repeater_lengths_part_one).to_string()
 }
 
-fn part_two(input: &str) -> String {
+fn part_two(input: &Vec<Range>) -> String {
     let get_repeater_lengths_part_two: GetRepeaterLengths =
         Box::new(get_repeater_lengths_part_two);
-    solve(input, &get_repeater_lengths_part_two)
+    get_invalid_ids_total(input, &get_repeater_lengths_part_two).to_string()
 }
 
 fn get_repeater_lengths_part_two(digit_count: u64) -> Vec<u64> {
@@ -54,35 +66,16 @@ fn get_repeater_lengths_part_two(digit_count: u64) -> Vec<u64> {
 
 type GetRepeaterLengths = Box<dyn Fn(u64) -> Vec<u64>>;
 
-fn solve(input: &str, get_repeater_lengths: &GetRepeaterLengths) -> String {
-    let mut unsigned_parser: IntParser<u64> = input.as_unsigned_iter();
-    let mut ranges: Vec<(u64, u64)> = vec![];
-    loop {
-
-        let start = match unsigned_parser.next() {
-            Some(val) => val,
-            None => break,
-        };
-        let end = match unsigned_parser.next() {
-            Some(val) => val,
-            None => panic!("each start of range sould have a corresponding end"),
-        };
-        ranges.push((start, end))
-    }
-
-    get_invalid_ids_total(ranges, get_repeater_lengths).to_string()
-}
-
-fn get_invalid_ids_total(ranges: Vec<(u64, u64)>, get_repeater_lengths: &GetRepeaterLengths) -> u64 {
+fn get_invalid_ids_total(ranges: &Vec<Range>, get_repeater_lengths: &GetRepeaterLengths) -> u64 {
     ranges
         .iter()
         .fold(0u64, |acc, range| {
-            acc + get_invalid_ids(*range, get_repeater_lengths).iter().sum::<u64>()
+            acc + get_invalid_ids(range, get_repeater_lengths).iter().sum::<u64>()
         })
 
 }
 
-fn get_invalid_ids((start, end): (u64, u64), get_repeater_lengths: &GetRepeaterLengths) -> Vec<u64> {
+fn get_invalid_ids(Range { start, end}: &Range, get_repeater_lengths: &GetRepeaterLengths) -> Vec<u64> {
     let start_len: u64 = start.to_string().len() as u64;
     let end_len: u64 = end.to_string().len() as u64;
 
@@ -95,12 +88,12 @@ fn get_invalid_ids((start, end): (u64, u64), get_repeater_lengths: &GetRepeaterL
                 .collect::<Vec<u64>>();
 
             // The range in which to search for invalid IDs
-            let range_start = if digit_count == start_len { start } else { 10u64.pow((digit_count - 1) as u32) };
-            let range_end = if digit_count == end_len { end } else { 10u64.pow(digit_count as u32) - 1 };
-
+            let range_start = if digit_count == start_len { *start } else { 10u64.pow((digit_count - 1) as u32) };
+            let range_end = if digit_count == end_len { *end } else { 10u64.pow(digit_count as u32) - 1 };
+            let range = Range { start: range_start, end: range_end};
             repeater_lengths
                 .iter()
-                .flat_map(|&f| find_invalid_in_range(range_start, range_end, f))
+                .flat_map(|&f| find_invalid_in_range(range, f))
                 .collect::<Vec<u64>>()
         })
         .collect();
@@ -111,7 +104,7 @@ fn get_invalid_ids((start, end): (u64, u64), get_repeater_lengths: &GetRepeaterL
     invalids
 }
 
-fn find_invalid_in_range(start: u64, end: u64, repitition_length: u64) -> Vec<u64> {
+fn find_invalid_in_range(Range { start, end }: Range, repitition_length: u64) -> Vec<u64> {
     let total_length: u64 = start.to_string().len() as u64;
     let repititions = total_length / repitition_length;
 
@@ -127,25 +120,25 @@ mod tests {
 
     #[test]
     fn find_invalid_in_range_2_digits() {
-        let res = find_invalid_in_range(10, 99, 1);
+        let res = find_invalid_in_range(Range { start: 10, end: 99 }, 1);
         assert_eq!(res, vec![11, 22, 33, 44, 55, 66, 77, 88, 99]);
     }
 
     #[test]
     fn find_invalid_in_range_2_digits_start_end_respected() {
-        let res = find_invalid_in_range(20, 40, 1);
+        let res = find_invalid_in_range(Range { start: 20, end: 40 }, 1);
         assert_eq!(res, vec![22, 33]);
     }
 
     #[test]
     fn find_invalid_in_range_2_digits_start_end_exact_inclusive() {
-        let res = find_invalid_in_range(44, 55, 1);
+        let res = find_invalid_in_range(Range { start: 44, end: 55 }, 1);
         assert_eq!(res, vec![44, 55]);
     }
 
     #[test]
     fn find_invalid_in_range_6_digits() {
-        let res = find_invalid_in_range(10101111, 20000000, 2);
+        let res = find_invalid_in_range(Range { start: 10101111, end: 20000000 }, 2);
         assert_eq!(res, vec![11111111, 12121212, 13131313, 14141414, 15151515, 16161616, 17171717, 18181818, 19191919]);
     }
 
