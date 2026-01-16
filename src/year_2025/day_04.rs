@@ -1,96 +1,89 @@
-use crate::{define_solver, utils::parse::AocParseExt};
+use crate::{define_solver, utils::{parse::AocParseExt}};
 use itertools::iproduct;
 
+type RollCountGrid = Vec<Vec<i32>>;
 
 define_solver!(
     Day4Solver,
     "2025",
     "04",
-    String,
+    RollCountGrid,
     preprocess,
     part_one,
     part_two
 );
 
-fn preprocess(input: &str) -> String {
-    String::from(input)
+fn get_neighbour_indices<T>(grid: &Vec<Vec<T>>, (i_start, j_start): (usize, usize)) -> Vec<(usize, usize)> {
+    iproduct!(
+        0i32.max((i_start as i32)-1) as usize..grid.len().min(i_start+2), 
+        0i32.max((j_start as i32)-1) as usize..grid[0].len().min(j_start+2)
+    )
+    .filter(|&(i,j)| !(i == i_start && j == j_start))
+    .collect()
 }
 
-fn part_one(input: &str) -> String {
-    solve(input, false)
-}
-
-fn part_two(input: &str) -> String {
-    solve(input, true)
-}
-
-fn solve(input: &str, multi_iter: bool) -> String {
-    let mut grid: Vec<Vec<char>> = input.to_char_grid();
-    let mut accessible_count = 0;
-
-    loop {
-        let mut iteration_accessible_count = 0;
-        for (i, j) in iproduct!(0..grid.len(), 0..grid[0].len()) {
-            if is_accessible(&grid, i as i32, j as i32) {
-                iteration_accessible_count += 1;
-                if multi_iter {
-                    grid[i][j] = 'X';
-                }
-            };
-        }
-
-        if iteration_accessible_count == 0 {
-            break;
-        }
-
-        accessible_count += iteration_accessible_count;
-
-        if !multi_iter {
-            break;
+fn preprocess(input: &str) -> Vec<Vec<i32>> {
+    let grid = input.to_char_grid();
+    let mut roll_count_grid: Vec<Vec<i32>> = vec![vec![0; grid.len()]; grid[0].len()];
+    for (i, j) in iproduct!(0..grid.len(), 0..grid[0].len()) {
+        if grid[i][j] == '@' {
+            // No of neighbours for each cell including itself, ie. max is 9.
+            roll_count_grid[i][j] = 1 + get_neighbour_indices(&grid, (i, j))
+                .into_iter()
+                .filter(|&(i,j)| grid[i][j] == '@')
+                .count() as i32
         }
     }
-    accessible_count.to_string()
+
+    roll_count_grid
 }
 
-
-
-fn is_accessible(grid: &Vec<Vec<char>>, i: i32, j: i32) -> bool {
-
-    let threshold = 4;
-
-    let is_current_paper = is_paper(grid, i, j);
-    
-    let is_surrounding_paper = vec![
-        is_paper(grid, i-1, j-1),
-        is_paper(grid, i-1, j),
-        is_paper(grid, i-1, j+1),
-        is_paper(grid, i, j-1),
-        is_paper(grid, i, j+1),
-        is_paper(grid, i+1, j-1),
-        is_paper(grid, i+1, j),
-        is_paper(grid, i+1, j+1),
-    ];
-
-    let surrounding_paper_count = is_surrounding_paper
-        .into_iter()
-        .filter(|&x| x)
-        .count();
-
-    is_current_paper && surrounding_paper_count < threshold
+fn part_one(input: &RollCountGrid) -> String {
+    get_accessible_count(input).to_string()
 }
 
+fn part_two(input: &RollCountGrid) -> String {
+    get_accessible_count_all(&mut input.clone()).to_string()
+}
 
-fn is_paper(grid: &Vec<Vec<char>>, i: i32, j: i32) -> bool {
+fn roll_is_accessible(roll: i32) -> bool {
+    roll > 0 && roll < 5
+}
 
-    if i >= grid.len() as i32 || i < 0 {
-        return false;
+fn get_accessible_count(grid: &Vec<Vec<i32>>) -> usize {
+    iproduct!(0..grid.len(), 0..grid[0].len())
+        .filter(|&(i,j)| roll_is_accessible(grid[i][j]))
+        .count()
+}
+
+fn get_accessible_count_all(grid: &mut Vec<Vec<i32>>) -> usize {
+    let mut stack: Vec<(usize, usize)> = vec![];
+    let mut count = 0;
+
+    for (i,j) in iproduct!(0..grid.len(), 0..grid[0].len()) {
+
+        // Add next qualifying item to the stack otherwise
+        if roll_is_accessible(grid[i][j]) {
+            stack.push((i,j));
+            grid[i][j] = 0;
+        }
     }
 
-    if j >= grid[0].len() as i32 || j < 0 {
-        return false;
+    // pop from stack and process while items are in the stack
+    while let Some((i, j)) = stack.pop() {
+        count += 1;
+        
+        let paper_neighbours: Vec<_> = get_neighbour_indices(grid, (i, j))
+            .into_iter()
+            .collect();
+
+        for &(i,j) in &paper_neighbours {
+            grid[i][j] = 0.max(grid[i][j]-1);
+        }
+        stack.extend(paper_neighbours.iter().filter(|&&(i, j)| grid[i][j] == 4));
     }
 
-    grid[i as usize][j as usize] == '@'
+    count
 }
 
 #[cfg(test)]
@@ -98,73 +91,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn is_paper_edge() {
-        let mut grid = vec![
-            vec!['.', '@', '.'],
-            vec!['.', '@', '.'],
-            vec!['.', '@', '.'],
+    fn get_accessible_simple() {
+        let grid = vec![
+            vec![0, 0, 0, 4, 4],
+            vec![0, 0, 0, 4, 5],
+            vec![0, 0, 0, 0, 4],
+            vec![0, 4, 6, 6, 5],
+            vec![0, 4, 6, 6, 4],
         ];
-        assert_eq!(is_paper(&mut grid, 0, 1), true);
-        assert_eq!(is_paper(&mut grid, 0, 0), false);
+
+        
+        assert_eq!(get_accessible_count(&grid), 7);
     }
 
     #[test]
-    fn is_paper_inside() {
+    fn get_accessible_all_test() {
         let mut grid = vec![
-            vec!['.', '@', '.'],
-            vec!['.', '@', '.'],
-            vec!['.', '@', '.'],
+            vec![0, 0, 0, 4, 4],
+            vec![0, 0, 0, 4, 5],
+            vec![0, 0, 0, 0, 4],
+            vec![0, 4, 6, 6, 5],
+            vec![0, 4, 6, 6, 4],
         ];
-        assert_eq!(is_paper(&mut grid, 1, 1), true);
+
+        assert_eq!(get_accessible_count_all(&mut grid), 13);
     }
-
-    #[test]
-    fn is_paper_out_of_bounds() {
-        let mut grid = vec![
-            vec!['.', '@'],
-            vec!['.', '@'],
-        ];
-        assert_eq!(is_paper(&mut grid, -1, -1), false);
-        assert_eq!(is_paper(&mut grid, 1, -1), false);
-        assert_eq!(is_paper(&mut grid, -1, 1), false);
-    }
-
-
-    #[test]
-    fn is_accessible_inside() {
-        let mut grid = vec![
-            vec!['.', '@', '.', '@'],
-            vec!['.', '@', '.', '@'],
-            vec!['.', '@', '@', '.'],
-            vec!['.', '@', '@', '@'],
-        ];
-        assert_eq!(is_accessible(&mut grid, 1, 1), true);
-        assert_eq!(is_accessible(&mut grid, 2, 2), false);
-    }
-
-    #[test]
-    fn is_accessible_outside() {
-        let mut grid = vec![
-            vec!['.', '@', '.', '@'],
-            vec!['.', '@', '.', '@'],
-            vec!['.', '@', '@', '.'],
-            vec!['.', '@', '@', '@'],
-        ];
-        assert_eq!(is_accessible(&mut grid, 0, 1), true);
-        assert_eq!(is_accessible(&mut grid, 3, 3), true);
-    }
-
-
-    #[test]
-    fn is_accessible_no_paper() {
-        let mut grid = vec![
-            vec!['.', '@', '.', '@'],
-            vec!['.', '.', '.', '@'],
-            vec!['.', '.', '.', '.'],
-            vec!['.', '@', '@', '@'],
-        ];
-        assert_eq!(is_accessible(&mut grid, 0, 0), false);
-        assert_eq!(is_accessible(&mut grid, 1, 1), false);
-    }
-
 }

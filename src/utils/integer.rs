@@ -1,9 +1,6 @@
 pub trait Integer<T> {}
-
 pub trait Unsigned<T>: Integer<T> {}
-
 pub trait Signed<T>: Integer<T> {}
-
 
 macro_rules! impl_empty_trait {
     ($name:ident for $($t:ty)*) => ($(

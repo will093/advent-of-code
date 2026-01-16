@@ -66,7 +66,6 @@ fn get_paths_part_two(device_map: &HashMap<String, Device>) -> u64 {
     route_1_total + route_2_total
 }
 
-
 struct Device {
     id: String,
     outputs: Vec<String>,

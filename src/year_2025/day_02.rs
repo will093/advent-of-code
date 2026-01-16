@@ -1,5 +1,4 @@
 use itertools::Itertools;
-
 use crate::define_solver;
 use crate::utils::parse::{AocParseExt, IntParser};
 use crate::utils::math;

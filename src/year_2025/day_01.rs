@@ -216,6 +216,4 @@ mod tests {
         let result: i32 = count_zero_clicks(&rotations, 50, 100);
         assert_eq!(result, 6);
     }
-    
-
 }

@@ -214,7 +214,6 @@ fn is_inside_boundary(boundary_edges: &Vec<Edge>, rect: &Rectangle) -> bool {
 mod tests {
     use super::*;
 
-
     #[test]
     fn largest_interior_area_example() {
         let boundary = vec![

@@ -25,6 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Box::new(year_2025::day_07::Day7Solver),
         Box::new(year_2025::day_08::Day8Solver),
         Box::new(year_2025::day_09::Day9Solver),
+        Box::new(year_2025::day_10::Day10Solver),
         Box::new(year_2025::day_11::Day11Solver),
         Box::new(year_2025::day_12::Day12Solver),
     ];
