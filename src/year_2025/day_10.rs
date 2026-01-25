@@ -80,7 +80,7 @@ fn configure_lights((lights, buttons, _): &Machine) -> u32 {
 
 fn configure_joltages_sum(machines: &Vec<Machine>) -> i32 {
     machines
-        .iter()
+        .into_iter()
         .map(configure_joltage)
         .sum::<i32>()
 } 
@@ -237,14 +237,87 @@ fn optimise_free_vars(OptimiseFreeVarsInput {
     rhs, 
     current_index}: OptimiseFreeVarsInput) -> Option<i32> {
 
-    if current_index == free_var_coefficients.len() {
-        let pivot_rows_positive = rhs[current_index].iter().take(pivot_row_count).all(|&val| val >= 0);
-        let non_pivot_rows_zero = rhs[current_index].iter().skip(pivot_row_count).all(|&val| val == 0);
-        if pivot_rows_positive && non_pivot_rows_zero {
-            return Some(presses);
-        } else {
+    // No free vars so our initial solution is correct and is the only solution.
+    if free_var_coefficients.len() == 0 {
+        return Some(presses)
+    // If there is only 1 free variable, we can determine a solution without searching the entire space.
+    } else if current_index == free_var_coefficients.len() - 1 {
+        let mut free_var_min = 0;
+        let mut free_var_max = free_var_maximums[current_index];
+
+        let pivot_row_eqs = free_var_coefficients[current_index].iter()
+            .zip(rhs[current_index].iter())
+            .take(pivot_row_count);
+
+        // For each row we have an equation with a + coef * x = b where 
+        // a is fixed var for pivot (> 0)
+        // coef is the coefficient for the free var in this row
+        // x is the value of the free var which we are trying to optimise
+        // b is the value of the rhs in this row
+        for eq in pivot_row_eqs {
+            match eq {
+                // eg. a + 3x = 35, we can calculate a maximum bound for x
+                (&coef, &rhs) if coef > 0 && rhs >= 0 => {
+                    let max = rhs / coef;
+                    free_var_max = free_var_max.min(max);
+                },
+                // eg. a - 3x = -35, we can calculate a minimum bound for x
+                (&coef, &rhs) if coef < 0 && rhs < 0 => {
+                    let min = rhs.div_euclid(coef);
+                    free_var_min = free_var_min.max(min);
+                },
+                // eg. a + 3x = -35, unsolvable for x,a >= 0
+                (&coef, &rhs) if coef >= 0 && rhs < 0 => {
+                    return None;
+                },
+                // eg. a - 3x = 35, does not help us narrow the bounds of x
+                (&coef, &rhs) if coef <= 0 && rhs >= 0 => {
+                    continue;
+                },
+                _ => unreachable!()
+            }
+        }
+
+        let non_pivot_row_eqs = free_var_coefficients[current_index].iter()
+            .zip(rhs[current_index].iter())
+            .skip(pivot_row_count);
+
+        // Here we have an equation with just coef * x = b, where x >= 0
+        for (&coef, &rhs) in non_pivot_row_eqs {
+            if coef == 0 {
+                // No solution
+                if rhs != 0 {
+                    return None;
+                }
+                // Free var not used in this row
+                continue
+            }
+            if rhs % coef != 0 {
+                // No integer solution
+                return None;
+            }
+            let value = rhs/coef;
+            if value >= free_var_min && value <= free_var_max {
+                free_var_min = value;
+                free_var_max = value;
+            } else {
+                return None
+            }
+        }
+
+        // No solution
+        if free_var_min > free_var_max {
             return None;
         }
+
+        // Use the min or max solution, depending on which one minimises the no of presses
+        let cost = free_var_costs[current_index];
+        if cost > 0 {
+            return Some(presses + (free_var_min * cost));
+        } else {
+            return Some(presses + (free_var_max * cost));
+        }
+    // If 2 or more free variables, try each possible value for the current free var
     } else {
         (0..=free_var_maximums[current_index])
             .filter_map(|x| {
