@@ -51,7 +51,7 @@ impl <'a>AocParseExt<'a> for &str {
 /// assert_eq!(it.next(), None);
 /// ```
 pub struct IntParser<'a, T> {
-    parser_type: IntParserType, // TODO: instead write SignedInteger and UnsignedInteger traits??
+    parser_type: IntParserType,
     input: std::slice::Iter<'a, u8>,
     _marker: std::marker::PhantomData<T>,
 }
